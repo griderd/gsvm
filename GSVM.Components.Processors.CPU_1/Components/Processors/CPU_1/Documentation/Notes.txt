@@ -1,0 +1,11 @@
+﻿NOTES
+
+ - The current implementation requires that literals be 16-bit integers.
+	Other types should be implemented by storing them in variables and
+	reading them from memory using READ, then writing them back with WRITE.
+
+ - Any flags set by the ALU, such as ArithmeticOverflow, Equal, GreaterThan,
+	and LessThan are volitile, and WILL be modified by each arithmetic operation.
+	Do not perform a compare followed by another ALU operation and assume that
+	the compare results will still be there. Those flags will no longer be
+	valid for the comparison and will only be valid for the latest operation.
