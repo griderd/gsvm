@@ -18,8 +18,12 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         List<byte> binary = new List<byte>();
         public byte[] Binary { get { return binary.ToArray(); } }
 
+        ushort address = 0;
+        
+        List<string> buildList;
         List<Opcode> opcodes;
         Dictionary<string, IDataType> symbols;
+        List<string> labels;
         Dictionary<string, int> unresolvedSymbols;
 
         List<string> sourceCode;
@@ -37,8 +41,10 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         public Assembler()
         {
             binary = new List<byte>();
+            buildList = new List<string>();
             opcodes = new List<Opcode>();
             symbols = new Dictionary<string, IDataType>();
+            labels = new List<string>();
             unresolvedSymbols = new Dictionary<string, int>();
             sourceCode = new List<string>();
         }
@@ -64,6 +70,12 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         {
             opcodes.Clear();
             binary.Clear();
+            buildList.Clear();
+            symbols.Clear();
+            labels.Clear();
+            unresolvedSymbols.Clear();
+            address = 0;
+            lineNumber = 0;
 
             try
             {
@@ -80,9 +92,21 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 throw;
             }
 
-            for (int i = 0; i <= opcodes.Count; i++)
+            for (int i = 0; i < buildList.Count; i++)
             {
-                binary.AddRange(opcodes[i].ToBinary());
+                string id = buildList[i];
+
+                if (id.StartsWith("$"))
+                {
+                    string _opid = id.Substring(1, id.Length - 1);
+                    int opid = int.Parse(_opid);
+                    binary.AddRange(opcodes[opid].ToBinary());
+                }
+                else if (!labels.Contains(id))
+                {
+                    binary.AddRange(symbols[id].ToBinary());
+                }
+                
             }
         }
 
@@ -102,26 +126,27 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 return;
             }
 
-            if (Regex.IsMatch(line, instructionCapture))
-            {
-                if (line.Contains("#"))
-                    RaiseError("Instruction line cannot contain comment.");
-                try
-                {
-                    ParseInstruction(line);
-                }
-                catch
-                {
-                    throw;
-                }
-            }
-            else if (Regex.IsMatch(line, variableCapture))
+            if (Regex.IsMatch(line, variableCapture))
             {
                 if (line.Contains("#"))
                     RaiseError("Variable line cannot contain comment.");
                 try
                 {
                     ParseVariable(line);
+                }
+                catch
+                {
+                    throw;
+                }
+            }
+
+            else if (Regex.IsMatch(line, instructionCapture))
+            {
+                if (line.Contains("#"))
+                    RaiseError("Instruction line cannot contain comment.");
+                try
+                {
+                    ParseInstruction(line);
                 }
                 catch
                 {
@@ -136,7 +161,8 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
         void ParseLabel(string label)
         {
-            symbols.Add(label, new uint16_t((uint)(opcodes.Count * 8)));
+            symbols.Add(label, new uint16_t((uint)address));
+            labels.Add(label);
         }
 
         void ParseVariable(string line)
@@ -147,7 +173,112 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             string name = match.Groups[2].Value;
             string value = match.Groups[3].Value;
 
-            // TODO: Add symbol
+            switch (type)
+            {
+                case "uint8":
+                case "byte":
+                    byte tempu8;
+                    if (byte.TryParse(value, out tempu8))
+                    {
+                        symbols.Add(name, new uint8_t(tempu8, address));
+                        address += 1;
+                        buildList.Add(name);
+                    }
+                    else
+                        RaiseError("Cannot parse uint8 value.");
+                    break;
+
+                case "int8":
+                case "sbyte":
+                    sbyte temp8;
+                    if (sbyte.TryParse(value, out temp8))
+                    {
+                        symbols.Add(name, new int8_t(temp8, address));
+                        address += 1;
+                        buildList.Add(name);
+                    }
+                    else
+                        RaiseError("Cannot parse int8 value.");
+                    break;
+
+                case "ushort":
+                case "uint16":
+                    ushort tempu16;
+                    if (ushort.TryParse(value, out tempu16))
+                    {
+                        symbols.Add(name, new uint16_t(tempu16, address));
+                        address += 2;
+                        buildList.Add(name);
+                    }
+                    else
+                        RaiseError("Cannot parse uint16 value.");
+                    break;
+
+                case "short":
+                case "int16":
+                    short temp16;
+                    if (short.TryParse(value, out temp16))
+                    {
+                        symbols.Add(name, new int16_t(temp16, address));
+                        address += 2;
+                        buildList.Add(name);
+                    }
+                    else
+                        RaiseError("Cannot parse int16 value.");
+                    break;
+
+                case "uint":
+                case "uint32":
+                    uint tempu32;
+                    if (uint.TryParse(value, out tempu32))
+                    {
+                        symbols.Add(name, new uint32_t(tempu32, address));
+                        address += 4;
+                        buildList.Add(name);
+                    }
+                    else
+                        RaiseError("Cannot parse uint32 value.");
+                    break;
+
+                case "int":
+                case "int32":
+                    int temp32;
+                    if (int.TryParse(value, out temp32))
+                    {
+                        symbols.Add(name, new int32_t(temp32, address));
+                        address += 4;
+                        buildList.Add(name);
+                    }
+                    else
+                        RaiseError("Cannot parse int32 value.");
+                    break;
+
+                case "ulong":
+                case "uint64":
+                    ulong tempu64;
+                    if (ulong.TryParse(value, out tempu64))
+                    {
+                        symbols.Add(name, new uint64_t(tempu64, address));
+                        address += 8;
+                        buildList.Add(name);
+                    }
+                    else
+                        RaiseError("Cannot parse uint64 value.");
+                    break;
+
+                case "long":
+                case "int64":
+                    long temp64;
+                    if (long.TryParse(value, out temp64))
+                    {
+                        symbols.Add(name, new int64_t(temp64, address));
+                        address += 8;
+                        buildList.Add(name);
+                    }
+                    else
+                        RaiseError("Cannot parse int64 value.");
+                    break;
+            }
         }
 
         void ParseInstruction(string line)
@@ -258,7 +389,9 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
                 Opcodes opcode = ParseOpcode(operation, flags);
                 Opcode oc = new Opcode(opcode, flags, operandA, operandB);
+                buildList.Add(string.Format("${0}", opcodes.Count));
                 opcodes.Add(oc);
+                address += 8;
             }
             catch
             {
@@ -468,7 +601,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                         }
                         else
                         {
-                            o.OperandA.Value = (ushort)value.Address;
+                            o.OperandB.Value = (ushort)value.Address;
                         }
                     }
                     else

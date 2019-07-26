@@ -53,7 +53,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 }
                 else
                 {
-                    result = new uint16_t(symbol.Address);
+                    result = new uint16_t((ushort)symbol.Address);
                 }
 
                 return true;
