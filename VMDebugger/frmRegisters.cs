@@ -34,13 +34,16 @@ namespace VMDebugger
         string[] sampleCode = new string[]
             {
                 "jmp main",
-                "hlt",
+                "short a 1",
+                "short b 2",
                 "main:",
-                "mov ax, 1",
-                "mov bx, 2",
+                "read ax, a",
+                "read bx, b",
                 "add ax, bx",
-                "ret",
-                "nop"
+                "mov bx, b",
+                "write bx, ax",
+                "read cx, bx",
+                "hlt",
             };
 
         Registers<Register> registers = new Registers<Register>();
