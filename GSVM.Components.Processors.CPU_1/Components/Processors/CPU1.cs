@@ -271,19 +271,19 @@ namespace GSVM.Components.Processors
 
             switch (length.Value)
             {
-                case 64:
+                case 8:
                     value = registers.Read(Register.MDR);
                     break;
 
-                case 32:
+                case 4:
                     value = registers.Read(Register.MDR32);
                     break;
 
-                case 16:
+                case 2:
                     value = registers.Read(Register.MDR16);
                     break;
 
-                case 8:
+                case 1:
                     value = registers.Read(Register.MDR8);
                     break;
             }
