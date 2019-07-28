@@ -104,6 +104,7 @@ namespace GSVM.Components.Processors
             opcodes.Add(Opcodes.readl, new Action<Register_t, uint16_t>(Read));
             opcodes.Add(Opcodes.writer, new Action<Register_t, Register_t>(Write));
             opcodes.Add(Opcodes.writel, new Action<Register_t, uint16_t>(Write));
+            opcodes.Add(Opcodes.outl, new Action<uint16_t, Register_t>(Out));
             opcodes.Add(Opcodes.pushr, new Action<Register_t>(PushRegister));
             opcodes.Add(Opcodes.pushl, new Action<uint16_t>(PushLiteral));
             opcodes.Add(Opcodes.pusha, new Action(PushAll));

@@ -40,9 +40,8 @@ namespace VMDebugger
                 "read ax, a",
                 "read bx, b",
                 "add ax, bx",
-                "mov bx, b",
-                "write bx, ax",
-                "read cx, bx",
+                "out b, ax",
+                "read cx, b",
                 "hlt",
             };
 

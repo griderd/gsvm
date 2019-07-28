@@ -431,6 +431,19 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 }
             };
 
+            Func<Opcodes, Opcodes> LR = l =>
+            {
+                if (lb() | ra())
+                    InvalidOperands();
+                if (la() & rb())
+                    return l;
+                else
+                {
+                    InvalidOperands();
+                    return Opcodes.nop;
+                }
+            };
+
             Func<Opcodes, Opcodes, Opcodes> R_L = (r, l) =>
             {
                 if (rb() | lb())
@@ -560,6 +573,9 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
                 case "ret":
                     return NoOps(Opcodes.ret);
+
+                case "out":
+                    return LR(Opcodes.outl);
             }
 
             return Opcodes.nop;

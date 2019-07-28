@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using GSVM.Components.Processors.CPU_1;
 using GSVM.Constructs.DataTypes;
 using GSVM.Components.Clocks;
@@ -81,6 +82,21 @@ namespace GSVM.Components.Processors
             MoveR(Register.MAR, reg);
             MoveL(Register.MLR, 2);
             MoveL(Register.MDR, literal);
+            WriteMemory();
+        }
+
+
+        /// <summary>
+        /// Writes the register to memory at address literal
+        /// </summary>
+        /// <param name="literal"></param>
+        /// <param name="reg"></param>
+        void Out(uint16_t literal, Register_t reg)
+        {
+            MoveL(Register.MAR, literal);
+            //Debug.WriteLine(literal);
+            MoveL(Register.MLR, registers.SizeOf(reg));
+            MoveR(Register.MDR, reg);
             WriteMemory();
         }
     }

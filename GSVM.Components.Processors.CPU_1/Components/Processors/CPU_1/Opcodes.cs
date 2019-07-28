@@ -268,7 +268,12 @@ namespace GSVM.Components.Processors.CPU_1
         /// <summary>
         /// Return
         /// </summary>
-        ret
+        ret,
+        /// <summary>
+        /// Writes the data in the register to memory at the address given
+        /// FORMAT: out L R
+        /// </summary>
+        outl
     }
 
     public enum Register : UInt16
