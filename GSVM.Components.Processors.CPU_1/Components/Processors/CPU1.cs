@@ -9,13 +9,12 @@ using GSVM.Components.Processors.CPU_1;
 using GSVM.Constructs;
 using GSVM.Constructs.DataTypes;
 using GSVM.Components.Clocks;
+using GSVM.Components.Controllers;
 
 namespace GSVM.Components.Processors
 {
     public partial class CPU1 : CPU
     {
-        ThreadedClock clock;
-
         Stack<IDataType> stack;
 
         Dictionary<Opcodes, Delegate> opcodes;
@@ -40,18 +39,17 @@ namespace GSVM.Components.Processors
                 debug = value;
                 if (debug)
                 {
-                    clock.Stop();
+                    Northbridge.Clock.Stop();
                 }
                 else
                 {
-                    clock.Start();
+                    Northbridge.Clock.Start();
                 }
             }
         }
 
         public CPU1()
         {
-            clock = new ThreadedClock(this);
             stack = new Stack<IDataType>();
             opcodes = new Dictionary<Opcodes, Delegate>();
 
@@ -103,8 +101,7 @@ namespace GSVM.Components.Processors
             opcodes.Add(Opcodes.readr, new Action<Register_t, Register_t>(Read));
             opcodes.Add(Opcodes.readl, new Action<Register_t, uint16_t>(Read));
             opcodes.Add(Opcodes.writer, new Action<Register_t, Register_t>(Write));
-            opcodes.Add(Opcodes.writel, new Action<Register_t, uint16_t>(Write));
-            opcodes.Add(Opcodes.outl, new Action<uint16_t, Register_t>(Out));
+            opcodes.Add(Opcodes.writel, new Action<uint16_t, Register_t>(Write));
             opcodes.Add(Opcodes.pushr, new Action<Register_t>(PushRegister));
             opcodes.Add(Opcodes.pushl, new Action<uint16_t>(PushLiteral));
             opcodes.Add(Opcodes.pusha, new Action(PushAll));
@@ -144,6 +141,9 @@ namespace GSVM.Components.Processors
             opcodes.Add(Opcodes.jl, new Action<uint16_t>(JumpLess));
             opcodes.Add(Opcodes.jle, new Action<uint16_t>(JumpLessEqual));
             opcodes.Add(Opcodes.ret, new Action(Ret));
+
+            opcodes.Add(Opcodes.derefr, new Action<Register_t, Register_t>(Deref));
+            opcodes.Add(Opcodes.derefl, new Action<Register_t, uint16_t>(Deref));
         }
 
         public override byte[] GetRegisters()
@@ -211,7 +211,7 @@ namespace GSVM.Components.Processors
         public override void Start()
         {
             Enabled = true;
-            clock.Start();
+            Northbridge.Clock.Start();
         }
 
         public override void Stop()
@@ -253,10 +253,12 @@ namespace GSVM.Components.Processors
         {
             if (Parent == null)
                 throw new Exception("Not connected to VM. Parent is null.");
+            if (Northbridge == null)
+                throw new Exception("Not connected to northbridge.");
 
             uint16_t address = registers.Read<uint16_t>(Register.MAR);
             uint16_t length = registers.Read<uint16_t>(Register.MLR);
-            byte[] value = Parent.memory.Read(address.Value, length.Value);
+            byte[] value = Northbridge.ReadMemory(address.Value, length.Value);
             registers.Write(Register.MDR, value);
         }
 
@@ -264,6 +266,8 @@ namespace GSVM.Components.Processors
         {
             if (Parent == null)
                 throw new Exception("Not connected to VM. Parent is null.");
+            if (Northbridge == null)
+                throw new Exception("Not connected to northbridge.");
 
             uint16_t address = registers.Read<uint16_t>(Register.MAR);
             uint16_t length = registers.Read<uint16_t>(Register.MLR);
@@ -289,7 +293,14 @@ namespace GSVM.Components.Processors
                     break;
             }
 
-            Parent.memory.Write(address, value);
+            try
+            {
+                Northbridge.WriteMemory(address, value);
+            }
+            catch (MemoryAccessException)
+            {
+                // Raise interrupt
+            }
         }
     }
 }

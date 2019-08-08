@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VMDebugger", "VMDebugger\VM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPU1", "GSVM.Components.Processors.CPU_1\CPU1.csproj", "{8DF80B65-CA6E-48A3-9419-36F6C17F16DF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPU1Assembler", "CPU1Assembler\CPU1Assembler.csproj", "{8FB1F413-9A0F-4FDA-9C6D-37717675DA9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{8DF80B65-CA6E-48A3-9419-36F6C17F16DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8DF80B65-CA6E-48A3-9419-36F6C17F16DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8DF80B65-CA6E-48A3-9419-36F6C17F16DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FB1F413-9A0F-4FDA-9C6D-37717675DA9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FB1F413-9A0F-4FDA-9C6D-37717675DA9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FB1F413-9A0F-4FDA-9C6D-37717675DA9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FB1F413-9A0F-4FDA-9C6D-37717675DA9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -42,5 +48,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{7F814DAC-B669-4DC9-991B-381A0B58A95A} = {0E98765B-B29A-4C49-87B0-F76DDD0D571C}
 		{E624C146-FA9C-424B-A273-DB787105D83F} = {0E98765B-B29A-4C49-87B0-F76DDD0D571C}
+		{8FB1F413-9A0F-4FDA-9C6D-37717675DA9F} = {0E98765B-B29A-4C49-87B0-F76DDD0D571C}
 	EndGlobalSection
 EndGlobal

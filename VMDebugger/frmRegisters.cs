@@ -10,11 +10,13 @@ using System.Windows.Forms;
 
 using GSVM;
 using GSVM.Components;
+using GSVM.Components.Controllers;
 using GSVM.Components.Clocks;
 using GSVM.Components.Processors;
 using GSVM.Components.Mem;
 using GSVM.Constructs.DataTypes;
 using GSVM.Components.Processors.CPU_1;
+using GSVM.Devices;
 
 using GSVM.Components.Processors.CPU_1.Assembler;
 
@@ -22,7 +24,14 @@ namespace VMDebugger
 {
     public partial class frmRegisters : Form
     {
-        VirtualMachine vm = new VirtualMachine(new CPU1(), 16384);
+        Memory cmosMemory;
+        DiskDrive cmos;
+        Southbridge sb;
+        CPU1 cpu;
+        Northbridge nb;
+        ThreadedClock clock;
+        VirtualMachine vm;
+
         byte[] sampleProgram = new byte[]
             {
                 0x08, 0x00, 0x09, 0x00, 0x0B, 0x00, 0x01, 0x00,         // mov ax, 1
@@ -40,7 +49,7 @@ namespace VMDebugger
                 "read ax, a",
                 "read bx, b",
                 "add ax, bx",
-                "out b, ax",
+                "write b, ax",
                 "read cx, b",
                 "hlt",
             };
@@ -87,23 +96,33 @@ namespace VMDebugger
 
             registers.BuildMemory();
 
+            byte[] bin = Assemble();
+
+            // Build the VM
+            cmosMemory = new Memory(bin);
+            cmos = new DiskDrive(cmosMemory, true);
+            sb = new Southbridge(cmos);
+            cpu = new CPU1();
+            nb = new Northbridge(cpu, sb, new Memory(16384), null);
+            clock = new ThreadedClock(nb);
+            nb.Clock = clock;
+            vm = new VirtualMachine(cpu, clock, nb, sb);
+
             byte[] state = vm.GetRegisters();
             registers.LoadState(state);
-
-            //vm.LoadMemory(sampleProgram);
-            Assemble();
 
             UpdateList();
         }
 
-        void Assemble()
+        byte[] Assemble()
         {
             Assembler asm = new Assembler();
             asm.AddSource(sampleCode);
             asm.Assemble();
             byte[] bin = asm.Binary;
+            return bin;
 
-            vm.LoadMemory(bin);
+            //vm.LoadMemory(bin);
         }
 
         private void Vm_UpdateDebugger(object sender, EventArgs e)
@@ -184,7 +203,7 @@ namespace VMDebugger
         ulong Lookup(uint address, uint length)
         {
             byte[] binary = new byte[8];
-            byte[] bvalue = vm.memory.Read(address, length);
+            byte[] bvalue = nb.Memory.Read(address, length);
             bvalue.CopyTo(binary, 0);
             ulong value = BitConverter.ToUInt64(binary, 0);
 

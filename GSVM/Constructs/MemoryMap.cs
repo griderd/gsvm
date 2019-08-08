@@ -102,5 +102,25 @@ namespace GSVM.Constructs
                 throw new KeyNotFoundException("A mapped range with that name does not exist.");
             }
         }
+
+        public T[] FindEncompassingRanges(SmartPointer ptr)
+        {
+            List<T> ranges = new List<T>();
+
+            T[] keys = map.Keys.ToArray();
+
+            for (int i = 0; i < keys.Length; i++)
+            {
+                T t = keys[i];
+                SmartPointer p = map[t];
+
+                if (ptr.Overlaps(p))
+                {
+                    ranges.Add(t);
+                }
+            }
+
+            return ranges.ToArray();
+        }
     }
 }

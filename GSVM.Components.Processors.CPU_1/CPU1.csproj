@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="Assembler\Assembler.cs" />
     <Compile Include="Assembler\AssemblyException.cs" />
+    <Compile Include="Assembler\Preprocessor.cs" />
     <Compile Include="Assembler\SyntaxTree.cs" />
     <Compile Include="Components\Processors\CPU1.cs" />
     <Compile Include="Components\Processors\CPU_1\Arithmetic.cs" />

@@ -49,6 +49,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GSVM.Components.Processors.CPU_1\CPU1.csproj">
+      <Project>{8df80b65-ca6e-48a3-9419-36f6c17f16df}</Project>
+      <Name>CPU1</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GSVM\GSVM.csproj">
       <Project>{46fb98a3-b251-4119-8e29-077b23d8fdb4}</Project>
       <Name>GSVM</Name>

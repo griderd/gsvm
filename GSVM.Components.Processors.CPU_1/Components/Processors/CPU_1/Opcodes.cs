@@ -270,10 +270,18 @@ namespace GSVM.Components.Processors.CPU_1
         /// </summary>
         ret,
         /// <summary>
-        /// Writes the data in the register to memory at the address given
-        /// FORMAT: out L R
+        /// Dereferences the pointer in the second register and stores the result in the first.
         /// </summary>
-        outl
+        derefr,
+        /// <summary>
+        /// Dereferences the pointer in the literal and stores the result in the register
+        /// </summary>
+        derefl,
+        /// <summary>
+        /// Sends the value in AX
+        /// </summary>
+        outp,
+        inp
     }
 
     public enum Register : UInt16

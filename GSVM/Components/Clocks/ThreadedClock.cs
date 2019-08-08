@@ -4,48 +4,44 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using GSVM.Components.Controllers;
 
 namespace GSVM.Components.Clocks
 {
-    public class ThreadedClock
+    public class ThreadedClock : ClockGenerator
     {
         Thread clockThread = new Thread(new ParameterizedThreadStart(ClockTick));
 
-        CPU cpu;
-
-        public static event EventHandler CPUTicked;
-
-        public static bool ClockEnabled { get; private set; }
-
-        public ThreadedClock(CPU cpu)
+        public ThreadedClock(Northbridge northbridge)
+            : base(northbridge)
         {
-            this.cpu = cpu;
+            
         }
 
-        public void Start()
+        public override void Start()
         {
-            if (!cpu.Debug)
+            if (!northbridge.CPU.Debug)
             {
-                clockThread.Start(cpu);
+                clockThread.Start(northbridge);
                 ClockEnabled = true;
             }
         }
 
-        public void Stop()
+        public override void Stop()
         {
             ClockEnabled = false;
         }
 
-        public static void ClockTick(object cpu)
+        public static void ClockTick(object nb)
         {
-            CPU _cpu = (CPU)cpu;
+            Northbridge _nb = (Northbridge)nb;
 
-            while (_cpu.Enabled & ClockEnabled)
+            while (_nb.CPU.Enabled & ClockEnabled)
             {
-                if (!_cpu.Busy)
+                if (!_nb.CPU.Busy)
                 {
-                    _cpu.Tick();
-                    CPUTicked?.Invoke(null, new EventArgs());
+                    _nb.ClockTick();
+                    RaiseTick();
                 }
             }
         }

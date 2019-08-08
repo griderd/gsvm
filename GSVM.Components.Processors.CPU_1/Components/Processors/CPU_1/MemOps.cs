@@ -73,31 +73,39 @@ namespace GSVM.Components.Processors
         }
 
         /// <summary>
-        /// Writes the literal to the memory at address in reg
+        /// Writes the value in reg to address in literal
         /// </summary>
         /// <param name="reg"></param>
         /// <param name="literal"></param>
-        void Write(Register_t  reg, uint16_t literal)
-        {
-            MoveR(Register.MAR, reg);
-            MoveL(Register.MLR, 2);
-            MoveL(Register.MDR, literal);
-            WriteMemory();
-        }
-
-
-        /// <summary>
-        /// Writes the register to memory at address literal
-        /// </summary>
-        /// <param name="literal"></param>
-        /// <param name="reg"></param>
-        void Out(uint16_t literal, Register_t reg)
+        void Write(uint16_t literal, Register_t reg)
         {
             MoveL(Register.MAR, literal);
-            //Debug.WriteLine(literal);
             MoveL(Register.MLR, registers.SizeOf(reg));
             MoveR(Register.MDR, reg);
             WriteMemory();
         }
+
+        /// <summary>
+        /// Dereferences the pointer in regB and stores the result in regA
+        /// </summary>
+        /// <param name="regA"></param>
+        /// <param name="regB"></param>
+        void Deref(Register_t regA, Register_t regB)
+        {
+            MoveR(regA, regB);
+            Read(regA, regA);
+        }
+
+        /// <summary>
+        /// Dereferences the pointer in literal and stores the result in reg
+        /// </summary>
+        /// <param name="reg"></param>
+        /// <param name="literal"></param>
+        void Deref(Register_t reg, uint16_t literal)
+        {
+            MoveL(reg, literal);
+            Read(reg, reg);
+        }
+
     }
 }

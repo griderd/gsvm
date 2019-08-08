@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{46FB98A3-B251-4119-8E29-077B23D8FDB4}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GSVM</RootNamespace>
-    <AssemblyName>GSVM</AssemblyName>
+    <ProjectGuid>{8FB1F413-9A0F-4FDA-9C6D-37717675DA9F}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>CPU1Assembler</RootNamespace>
+    <AssemblyName>CPU1Assembler</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,6 +23,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -30,9 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GSLib">
-      <HintPath>..\..\Grider Software Libraries\GSLib\GSLib\bin\Release\GSLib.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,32 +42,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Components\ALU.cs" />
-    <Compile Include="Components\Clocks\ClockGenerator.cs" />
-    <Compile Include="Components\Clocks\DebugStepping.cs" />
-    <Compile Include="Components\Clocks\ThreadedClock.cs" />
-    <Compile Include="Components\Controllers\GraphicsCard.cs" />
-    <Compile Include="Components\Controllers\MemoryAccessData.cs" />
-    <Compile Include="Components\Controllers\Northbridge.cs" />
-    <Compile Include="Components\Controllers\Southbridge.cs" />
-    <Compile Include="Components\CPU.cs" />
-    <Compile Include="Components\Exceptions\MemoryAccessException.cs" />
-    <Compile Include="Components\Memory.cs" />
-    <Compile Include="Components\Mem\Registers.cs" />
-    <Compile Include="Constructs\DataTypes\IDataType.cs" />
-    <Compile Include="Constructs\DataTypes\IIntegral.cs" />
-    <Compile Include="Constructs\DataTypes\Integrals.cs" />
-    <Compile Include="Constructs\MemoryMap.cs" />
-    <Compile Include="Constructs\SmartPointer.cs" />
-    <Compile Include="Devices\DiskDrive.cs" />
-    <Compile Include="Devices\DiskDriveRequest.cs" />
-    <Compile Include="Devices\DummyDrive.cs" />
-    <Compile Include="Devices\GenericDeviceBus.cs" />
-    <Compile Include="Devices\GenericSerialBus.cs" />
-    <Compile Include="Devices\GenericSerialRequest.cs" />
-    <Compile Include="VirtualMachine.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GSVM.Components.Processors.CPU_1\CPU1.csproj">
+      <Project>{8df80b65-ca6e-48a3-9419-36f6c17f16df}</Project>
+      <Name>CPU1</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GSVM\GSVM.csproj">
+      <Project>{46fb98a3-b251-4119-8e29-077b23d8fdb4}</Project>
+      <Name>GSVM</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

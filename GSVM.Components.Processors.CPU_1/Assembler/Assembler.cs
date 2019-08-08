@@ -13,7 +13,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         int lineNumber = 0;
 
         string instructionCapture = "([a-zA-Z0-9]{3,})[ ]?([a-zA-Z0-9]*)(, )?([a-zA-Z0-9]*)";
-        string variableCapture = "([a-zA-Z]{1}[a-zA-Z0-9_]*) ([a-zA-Z]{1}[a-zA-Z0-9_]*) (\\-?[0-9]{1,}[bh]?|\".*\"|\'.{1}\')";
+        string variableCapture = "([a-zA-Z]{1}[a-zA-Z0-9_]*) ([a-zA-Z]{1}[a-zA-Z0-9_]*) (\\-?[0-9]{1,}[bh]?|\".*\"|\'.{1}\'|@[a-zA-Z]{1}[a-zA-Z0-9_]*)";
 
         List<byte> binary = new List<byte>();
         public byte[] Binary { get { return binary.ToArray(); } }
@@ -26,6 +26,8 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         List<string> labels;
         Dictionary<string, int> unresolvedSymbols;
 
+        Dictionary<string, string> pragma;
+
         List<string> sourceCode;
         public string[] SourceCode { get { return sourceCode.ToArray(); } }
 
@@ -33,12 +35,16 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
         string CurrentLine { get { return sourceCode[lineNumber - 1].Trim(); } }
 
+        public ushort Offset { get; set; }
+
+        ushort TrueAddress { get { return (ushort)(Offset + address); } }
+
         public void AddSource(string[] code)
         {
             sourceCode.AddRange(code);
         }
 
-        public Assembler()
+        public Assembler(Dictionary<string, string> pragma = null)
         {
             binary = new List<byte>();
             buildList = new List<string>();
@@ -47,6 +53,11 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             labels = new List<string>();
             unresolvedSymbols = new Dictionary<string, int>();
             sourceCode = new List<string>();
+
+            if (pragma == null)
+                this.pragma = new Dictionary<string, string>();
+            else
+                this.pragma = pragma;
         }
 
         void RaiseError(string message)
@@ -63,6 +74,30 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             catch
             {
                 throw;
+            }
+        }
+
+        public uint Length
+        {
+            get
+            {
+                uint length = 0;
+
+                for (int i = 0; i < buildList.Count; i++)
+                {
+                    string id = buildList[i];
+
+                    if (id.StartsWith("$"))
+                    {
+                        length += 8;
+                    }
+                    else if (!labels.Contains(id))
+                    {
+                        length += symbols[id].Length;
+                    }
+                }
+
+                return length;
             }
         }
 
@@ -86,6 +121,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 }
 
                 ResolveSymbols();
+                ResolvePragmas();
             }
             catch
             {
@@ -161,7 +197,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
         void ParseLabel(string label)
         {
-            symbols.Add(label, new uint16_t((uint)address));
+            symbols.Add(label, new uint16_t((uint)TrueAddress));
             labels.Add(label);
         }
 
@@ -180,7 +216,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     byte tempu8;
                     if (byte.TryParse(value, out tempu8))
                     {
-                        symbols.Add(name, new uint8_t(tempu8, address));
+                        symbols.Add(name, new uint8_t(tempu8, TrueAddress));
                         address += 1;
                         buildList.Add(name);
                     }
@@ -193,7 +229,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     sbyte temp8;
                     if (sbyte.TryParse(value, out temp8))
                     {
-                        symbols.Add(name, new int8_t(temp8, address));
+                        symbols.Add(name, new int8_t(temp8, TrueAddress));
                         address += 1;
                         buildList.Add(name);
                     }
@@ -206,7 +242,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     ushort tempu16;
                     if (ushort.TryParse(value, out tempu16))
                     {
-                        symbols.Add(name, new uint16_t(tempu16, address));
+                        symbols.Add(name, new uint16_t(tempu16, TrueAddress));
                         address += 2;
                         buildList.Add(name);
                     }
@@ -214,12 +250,39 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                         RaiseError("Cannot parse uint16 value.");
                     break;
 
+                case "ptr":
+                    ushort tempptr;
+                    string symb = value.Substring(1);
+                    if (ushort.TryParse(value, out tempptr))
+                    {
+                        symbols.Add(name, new uint16_t(tempptr, TrueAddress));
+                        address += 2;
+                        buildList.Add(name);
+                    }
+                    else if (symbols.ContainsKey(symb))
+                    {
+                        uint ptr = symbols[symb].Address;
+                        if (ptr > ushort.MaxValue)
+                        {
+                            RaiseError("Pointer value exceeds uint16 max value.");
+                        }
+                        else
+                        {
+                            symbols.Add(name, new uint16_t((ushort)ptr, TrueAddress));
+                        }
+                    }
+                    else if (!symbols.ContainsKey(symb))
+                        RaiseError(string.Format("Symbol \"{0}\" does not exist before pointer \"{1}\".", value, name));
+                    else
+                        RaiseError("Cannot parse pointer.");
+                    break;
+
                 case "short":
                 case "int16":
                     short temp16;
                     if (short.TryParse(value, out temp16))
                     {
-                        symbols.Add(name, new int16_t(temp16, address));
+                        symbols.Add(name, new int16_t(temp16, TrueAddress));
                         address += 2;
                         buildList.Add(name);
                     }
@@ -227,12 +290,13 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                         RaiseError("Cannot parse int16 value.");
                     break;
 
+                case "lptr":
                 case "uint":
                 case "uint32":
                     uint tempu32;
                     if (uint.TryParse(value, out tempu32))
                     {
-                        symbols.Add(name, new uint32_t(tempu32, address));
+                        symbols.Add(name, new uint32_t(tempu32, TrueAddress));
                         address += 4;
                         buildList.Add(name);
                     }
@@ -245,7 +309,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     int temp32;
                     if (int.TryParse(value, out temp32))
                     {
-                        symbols.Add(name, new int32_t(temp32, address));
+                        symbols.Add(name, new int32_t(temp32, TrueAddress));
                         address += 4;
                         buildList.Add(name);
                     }
@@ -258,7 +322,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     ulong tempu64;
                     if (ulong.TryParse(value, out tempu64))
                     {
-                        symbols.Add(name, new uint64_t(tempu64, address));
+                        symbols.Add(name, new uint64_t(tempu64, TrueAddress));
                         address += 8;
                         buildList.Add(name);
                     }
@@ -271,7 +335,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     long temp64;
                     if (long.TryParse(value, out temp64))
                     {
-                        symbols.Add(name, new int64_t(temp64, address));
+                        symbols.Add(name, new int64_t(temp64, TrueAddress));
                         address += 8;
                         buildList.Add(name);
                     }
@@ -407,6 +471,19 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             Func<bool> la = () => flags.HasFlag(OpcodeFlags.Literal1);
             Func<bool> lb = () => flags.HasFlag(OpcodeFlags.Literal2);
 
+            Func<Opcodes, Opcodes, Opcodes> RR_LR = (rr, lr) =>
+            {
+                if (ra() & rb())
+                    return rr;
+                if (la() & rb())
+                    return lr;
+                else
+                {
+                    InvalidOperands();
+                    return Opcodes.nop;
+                }
+            };
+
             Func<Opcodes, Opcodes, Opcodes> RR_RL = (r, l) =>
             {
                 if (ra() & rb())
@@ -494,7 +571,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     return RR_RL(Opcodes.readr, Opcodes.readl);
 
                 case "write":
-                    return RR_RL(Opcodes.writer, Opcodes.writel);
+                    return RR_LR(Opcodes.writer, Opcodes.writel);
 
                 case "push":
                     return R_L(Opcodes.pushr, Opcodes.pushl);
@@ -574,8 +651,8 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 case "ret":
                     return NoOps(Opcodes.ret);
 
-                case "out":
-                    return LR(Opcodes.outl);
+                case "deref":
+                    return RR_RL(Opcodes.derefr, Opcodes.derefl);
             }
 
             return Opcodes.nop;
@@ -629,6 +706,14 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 {
                     RaiseError(string.Format("Symbol \"{0}\" not found and could not be resolved.", symbol));
                 }
+            }
+        }
+
+        void ResolvePragmas()
+        {
+            if (pragma.ContainsKey("len") && symbols.ContainsKey(pragma["len"]))
+            {
+                ((uint32_t)(symbols[pragma["len"]])).Value = Length;
             }
         }
     }

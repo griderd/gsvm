@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using GSVM.Components.Mem;
 using GSVM.Constructs;
 using GSVM.Constructs.DataTypes;
+using GSVM.Components.Controllers;
 
 namespace GSVM.Components
 {
@@ -15,13 +16,17 @@ namespace GSVM.Components
         public bool Busy { get; protected set; }
         public virtual bool Debug { get; set; }
 
+        public int Ring { get; protected set; }
+
         public VirtualMachine Parent { get; set; }
+        public Northbridge Northbridge { get; set; }
 
         protected ALU alu;
 
         public CPU()
         {
             alu = new ALU();
+            Ring = 0;
         }
 
         /// <summary>Represents a tick for the external clock, starting an execution cycle.</summary>
@@ -49,10 +54,7 @@ namespace GSVM.Components
 
         public void DebugStep()
         {
-            if (Debug)
-            {
-                Clocks.DebugStepping.Step(this);
-            }
+            
         }
 
         public abstract byte[] GetRegisters();

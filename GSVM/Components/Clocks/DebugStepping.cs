@@ -3,21 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GSVM.Components.Controllers;
 
 namespace GSVM.Components.Clocks
 {
-    public class DebugStepping
+    public class DebugStepping : ClockGenerator
     {
-        public static event EventHandler CPUTicked;
-
-        public static void Step(CPU cpu)
+        public DebugStepping(Northbridge northbridge) : base(northbridge)
         {
-            if (cpu.Enabled)
+        }
+
+        public static void Step(Northbridge nb)
+        {
+            if (nb.CPU.Enabled)
             {
-                if (!cpu.Busy)
+                if (!nb.CPU.Busy)
                 {
-                    cpu.Tick();
-                    CPUTicked?.Invoke(null, new EventArgs());
+                    nb.ClockTick();
+                    RaiseTick();
                 }
             }
         }

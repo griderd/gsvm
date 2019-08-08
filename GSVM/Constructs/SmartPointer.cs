@@ -16,5 +16,14 @@ namespace GSVM.Constructs
             Address = address;
             Length = length;
         }
+
+        public bool Overlaps(SmartPointer ptr)
+        {
+            if ((ptr.Address >= Address) & (ptr.Address < Address + Length))
+                return true;
+            if ((ptr.Address + ptr.Length >= Address) & (ptr.Address + ptr.Length <= Address + Length))
+                return true;
+            return false;
+        }
     }
 }
