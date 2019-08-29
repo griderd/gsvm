@@ -8,15 +8,19 @@ namespace GSVM.Components.Controllers
 {
     public abstract class GraphicsCard
     {
-        Northbridge northbridge;
         protected Memory memory;
 
-        public GraphicsCard(Northbridge northbridge, Memory memory)
+        public uint Length { get; private set; }
+
+        public GraphicsCard(Memory memory)
         {
-            this.northbridge = northbridge;
             this.memory = memory;
+            Length = memory.Length;
         }
 
-        public abstract void ClockTick();
+        public void Write(uint address, byte[] value)
+        {
+            memory.Write(address, value);
+        }
     }
 }

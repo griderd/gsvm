@@ -62,7 +62,8 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             {
                 if ((!IsRegister(operand)) & (operand != ""))
                 {
-                    unresolvedSymbols.Add(operand, opcodes.Count);
+                    //unresolvedSymbols.Add(operand, opcodes.Count);
+                    unresolvedSymbols.Add(new UnresolvedSymbol { symbol = operand, location = opcodes.Count });
                     return true;
                 }
 

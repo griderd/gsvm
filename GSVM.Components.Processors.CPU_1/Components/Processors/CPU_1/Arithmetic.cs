@@ -18,22 +18,25 @@ namespace GSVM.Components.Processors
                 SetFlag(CPUFlags.ArithmeticOverflow);
             else
                 UnsetFlag(CPUFlags.ArithmeticOverflow);
+        }
 
-            if (alu.flags.HasFlag(ALUFlags.Equal))
+        void ALUCopyCompareFlags()
+        {
+            if ((alu.flags & ALUFlags.Equal) == ALUFlags.Equal)
                 SetFlag(CPUFlags.Equal);
             else
                 UnsetFlag(CPUFlags.Equal);
 
-            if (alu.flags.HasFlag(ALUFlags.GreaterThan))
+            if ((alu.flags & ALUFlags.GreaterThan) == ALUFlags.GreaterThan)
                 SetFlag(CPUFlags.GreaterThan);
             else
                 UnsetFlag(CPUFlags.GreaterThan);
 
-            if (alu.flags.HasFlag(ALUFlags.LessThan))
+            if ((alu.flags & ALUFlags.LessThan) == ALUFlags.LessThan)
                 SetFlag(CPUFlags.LessThan);
             else
                 UnsetFlag(CPUFlags.LessThan);
-        }
+    }
 
         void ALUOperation(Register_t a, Register_t  b, ALU.ALUOperation op)
         {
@@ -163,7 +166,17 @@ namespace GSVM.Components.Processors
 
             alu.Compare(opA, opB);
 
-            ALUCopyFlags();
+            ALUCopyCompareFlags();
+        }
+
+        void Compare(Register_t a, uint16_t b)
+        {
+            byte[] opA = registers.Read(a);
+            byte[] opB = b.ToBinary();
+
+            alu.Compare(opA, opB);
+
+            ALUCopyCompareFlags();
         }
     }
 }

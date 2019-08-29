@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GSVM.Components.Clocks;
 using GSVM.Constructs;
+using GSVM.Constructs.DataTypes;
 
 namespace GSVM.Components.Controllers
 {
@@ -16,6 +17,8 @@ namespace GSVM.Components.Controllers
         public DebugStepping DebugClock { get; private set; }
         public ClockGenerator Clock { get; set; }
         protected Southbridge southbridge;
+
+        public uint videoMemoryAddress = 0;
 
         public MemoryMap<MemoryAccessData> MemoryMap { get; private set; }
 
@@ -39,8 +42,12 @@ namespace GSVM.Components.Controllers
         public virtual void ClockTick()
         {
             if ((CPU.Enabled) & (!CPU.Busy)) CPU.Tick();
-            Graphics?.ClockTick();
             southbridge.ClockTick();
+
+            if (Graphics != null)
+            {
+                WriteDisplay(0, ReadMemory(videoMemoryAddress, Graphics.Length));
+            }
         }
 
         public virtual void DebugTick()
@@ -53,7 +60,14 @@ namespace GSVM.Components.Controllers
 
         public byte[] ReadMemory(uint address, uint length)
         {
-            return Memory.Read(address, length);
+            try
+            {
+                return Memory.Read(address, length);
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         public void WriteMemory(uint address, byte[] value)
@@ -62,6 +76,11 @@ namespace GSVM.Components.Controllers
                 Memory.Write(address, value);
             else
                 throw new MemoryAccessException(new SmartPointer(address, (uint)value.Length), true);
+        }
+
+        public void WriteDisplay(uint address, byte[] value)
+        {
+            Graphics.Write(address, value);
         }
 
         bool CanWriteMemory(uint address, uint length)
@@ -79,6 +98,19 @@ namespace GSVM.Components.Controllers
             }
 
             return true;
+        }
+
+        public void WriteToPort(uint32_t port, uint32_t addr, uint32_t len)
+        {
+            byte[] value = ReadMemory(addr.Value, len.Value);
+            southbridge.WriteToPort((int)port.Value, value);
+
+        }
+
+        public void ReadFromPort(uint32_t port, uint32_t addr)
+        {
+            byte[] value = southbridge.ReadFromPort((int)port.Value);
+            WriteMemory(addr.Value, value);
         }
     }
 }

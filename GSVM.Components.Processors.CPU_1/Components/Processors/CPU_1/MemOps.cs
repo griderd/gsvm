@@ -53,7 +53,7 @@ namespace GSVM.Components.Processors
         /// <param name="literal"></param>
         void Read(Register_t  reg, uint16_t literal)
         {
-            MoveL(Register.MLR, 2);
+            MoveL(Register.MLR, registers.SizeOf(reg));
             MoveL(Register.MAR, literal);
             ReadMemory();
             MoveR(reg, Register.MDR);

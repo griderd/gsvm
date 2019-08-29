@@ -14,5 +14,23 @@ namespace GSVM.Devices
         {
 
         }
+
+        public override void ClockTick()
+        {
+            if (ReadyToWrite)
+            {
+                DiskDriveRequest result = new DiskDriveRequest();
+
+                result.address = WriteData.address;
+                result.length = WriteData.length;
+                result.error = 1;
+                result.data = new byte[0];
+
+                ReadData = result;
+                ReadyToRead = true;
+                ReadyToWrite = false;
+            }
+
+        }
     }
 }

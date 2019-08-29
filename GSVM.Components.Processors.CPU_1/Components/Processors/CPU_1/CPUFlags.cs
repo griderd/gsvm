@@ -15,6 +15,7 @@ namespace GSVM.Components.Processors.CPU_1
         ArithmeticOverflow = 2,
         Equal = 4,
         GreaterThan = 8,
-        LessThan = 16
+        LessThan = 16,
+        MemoryError = 32
     }
 }

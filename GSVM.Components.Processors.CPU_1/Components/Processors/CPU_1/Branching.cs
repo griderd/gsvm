@@ -11,20 +11,35 @@ namespace GSVM.Components.Processors
 {
     public partial class CPU1 : CPU
     {
+        void Brk()
+        {
+            Debug = true;
+        }
+
         void Ret()
         {
             Pop(Register.PC);
         }
 
-        void JumpR(Register_t a)
+        void CallR(Register_t a)
         {
             PushRegister(Register.PC);
             MoveR(Register.PC, a);
         }
 
-        void JumpL(uint16_t a)
+        void CallL(uint16_t a)
         {
             PushRegister(Register.PC);
+            MoveL(Register.PC, a);
+        }
+
+        void JumpR(Register_t a)
+        {
+            MoveR(Register.PC, a);
+        }
+
+        void JumpL(uint16_t a)
+        {
             MoveL(Register.PC, a);
         }
 

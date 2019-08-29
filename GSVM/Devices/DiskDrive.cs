@@ -43,6 +43,13 @@ namespace GSVM.Devices
                         result.length = 4;
                         result.address = 0;
                     }
+                    else if (WriteData.error == 254)     // If a handshake command is sent
+                    {
+                        // Send handshake back
+                        result.data = new byte[] { 254 };
+                        result.length = 1;
+                        result.address = 0;
+                    }
                     else
                     {
                         try

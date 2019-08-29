@@ -22,13 +22,28 @@ namespace CPU1Assembler
 
             string[] code = File.ReadAllLines(input);
 
-            preprocessor.AddCode(code);
-            code = preprocessor.ProcessCode();
+            try
+            {
+                preprocessor.AddCode(code);
+                code = preprocessor.ProcessCode();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
 
             File.WriteAllLines("prep_" + output + "_.asm", code);
 
-            assembler = new Assembler(preprocessor.Pragmas);
-            assembler.AddSource(code);
+            try
+            {
+                assembler = new Assembler(preprocessor.Pragmas);
+                assembler.AddSource(code);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
 
             try
             {
@@ -38,8 +53,13 @@ namespace CPU1Assembler
             {
                 Console.WriteLine("{0}: {1} - {2}", ex.LineNumber, ex.Message, ex.Code);
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
 
             File.WriteAllBytes(output, assembler.Binary);
+            Console.WriteLine("{0} bytes written", assembler.Length);
 
             Console.ReadLine();
         }

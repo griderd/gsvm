@@ -68,9 +68,14 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 {
                     Pragma(line);
                 }
-                else if (line.StartsWith("#"))
+                else if (line.StartsWith("#") | line.StartsWith(";") | (line == ""))
                 {
                     // DO NOTHING
+                }
+                else if (line.EndsWith(":"))
+                {
+                    phase1.Add("");
+                    phase1.Add(line);
                 }
                 else
                 {

@@ -171,7 +171,8 @@ namespace GSVM.Components.Mem
         public void Move(TKey to, TKey from)
         {
             SmartPointer pTo = map.Lookup(to);
-            memory.Copy(map.Lookup(from).Address, pTo.Address, pTo.Length);
+            SmartPointer pFrom = map.Lookup(from);
+            memory.Copy(pFrom.Address, pFrom.Length, pTo.Address, pTo.Length);
         }
 
         public SmartPointer Lookup(TKey name)

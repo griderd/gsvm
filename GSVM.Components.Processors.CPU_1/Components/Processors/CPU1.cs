@@ -16,6 +16,7 @@ namespace GSVM.Components.Processors
     public partial class CPU1 : CPU
     {
         Stack<IDataType> stack;
+        public IDataType[] Stack { get { return stack.ToArray(); } }
 
         Dictionary<Opcodes, Delegate> opcodes;
 
@@ -25,6 +26,13 @@ namespace GSVM.Components.Processors
         Delegate operation;
 
         Integral<ushort> operandA, operandB;
+
+        public string Name { get { return "GSVM CPU1"; } }
+        public double Speed { get; private set; }
+
+        bool speedTesting = false;
+        int cycleCount = 0;
+        DateTime startTime;
 
         bool debug;
         public override bool Debug
@@ -41,12 +49,10 @@ namespace GSVM.Components.Processors
                 {
                     Northbridge.Clock.Stop();
                 }
-                else
-                {
-                    Northbridge.Clock.Start();
-                }
             }
         }
+
+        bool cycleException = false;
 
         public CPU1()
         {
@@ -69,6 +75,8 @@ namespace GSVM.Components.Processors
             registers.Append<uint16_t>(Register.IDT);   // Interrupt Descriptor Table address
 
             registers.Append<uint64_t>(Register.FLAGS); // Flags register
+
+            registers.Append<uint32_t>(Register.SVM); // Shared Video Memory address
 
             registers.Append<uint32_t>(Register.EAX);
             registers.Subdivide(Register.EAX, Register.AX);
@@ -126,11 +134,13 @@ namespace GSVM.Components.Processors
             opcodes.Add(Opcodes.xorl, new Action<Register_t, uint16_t>(Xor));
             opcodes.Add(Opcodes.not, new Action<Register_t>(Not));
             opcodes.Add(Opcodes.neg, new Action<Register_t>(Neg));
+            opcodes.Add(Opcodes.cmpr, new Action<Register_t, Register_t>(Compare));
+            opcodes.Add(Opcodes.cmpl, new Action<Register_t, uint16_t>(Compare));
 
             opcodes.Add(Opcodes.hlt, new Action(Halt));
 
-            // intr
-            // intl
+            opcodes.Add(Opcodes._out, new Action(_out));
+            opcodes.Add(Opcodes._in, new Action(_in));
 
             opcodes.Add(Opcodes.jmpr, new Action<Register_t>(JumpR));
             opcodes.Add(Opcodes.jmpl, new Action<uint16_t>(JumpL));
@@ -140,10 +150,16 @@ namespace GSVM.Components.Processors
             opcodes.Add(Opcodes.jge, new Action<uint16_t>(JumpGreaterEqual));
             opcodes.Add(Opcodes.jl, new Action<uint16_t>(JumpLess));
             opcodes.Add(Opcodes.jle, new Action<uint16_t>(JumpLessEqual));
+            opcodes.Add(Opcodes.callr, new Action<Register_t>(CallR));
+            opcodes.Add(Opcodes.calll, new Action<uint16_t>(CallL));
             opcodes.Add(Opcodes.ret, new Action(Ret));
 
             opcodes.Add(Opcodes.derefr, new Action<Register_t, Register_t>(Deref));
             opcodes.Add(Opcodes.derefl, new Action<Register_t, uint16_t>(Deref));
+
+            opcodes.Add(Opcodes.brk, new Action(Brk));
+
+            opcodes.Add(Opcodes.cpuid, new Action(CPUID));
         }
 
         public override byte[] GetRegisters()
@@ -153,8 +169,16 @@ namespace GSVM.Components.Processors
 
         protected override void Fetch()
         {
+            cycleException = false;
+            if (speedTesting)
+                cycleCount++;
+
             if (!HasFlag(CPUFlags.WaitForInterrupt))
             {
+                uint svm = registers.Read<uint32_t>(Register.SVM).Value;
+                if (Northbridge.videoMemoryAddress != svm)
+                    Northbridge.videoMemoryAddress = svm;
+
                 MoveR(Register.MAR, Register.PC);
                 MoveL(Register.MLR, 8);
                 ReadMemory();
@@ -168,50 +192,80 @@ namespace GSVM.Components.Processors
 
         protected override void Decode()
         {
-            opcode = registers.Read<Opcode>(Register.CIR);
-            operation = opcodes[opcode.Code];
+            if (!cycleException)
+            {
+                opcode = registers.Read<Opcode>(Register.CIR);
+                try
+                {
+                    operation = opcodes[opcode.Code];
+                }
+                catch (KeyNotFoundException)
+                {
+                    cycleException = true;
+                    // TODO: Interrupt with an invalid opcode
+                }
 
-            if (opcode.Flags.HasFlag(OpcodeFlags.Register1))
-                operandA = new Register_t(opcode.OperandA);
+                if (opcode.Flags.HasFlag(OpcodeFlags.Register1))
+                    operandA = new Register_t(opcode.OperandA);
 
-            if (opcode.Flags.HasFlag(OpcodeFlags.Register2))
-                operandB = new Register_t(opcode.OperandB);
+                if (opcode.Flags.HasFlag(OpcodeFlags.Register2))
+                    operandB = new Register_t(opcode.OperandB);
 
-            if (opcode.Flags.HasFlag(OpcodeFlags.Literal1))
-                operandA = opcode.OperandA;
+                if (opcode.Flags.HasFlag(OpcodeFlags.Literal1))
+                    operandA = opcode.OperandA;
 
-            if (opcode.Flags.HasFlag(OpcodeFlags.Literal2))
-                operandB = opcode.OperandB;
+                if (opcode.Flags.HasFlag(OpcodeFlags.Literal2))
+                    operandB = opcode.OperandB;
 
+            }
         }
 
         protected override void Execute()
         {
-            int arguments = operation.Method.GetParameters().Length;
-
-            // TODO: Wrap in try-catch
-            switch (arguments)
+            if (!cycleException)
             {
-                case 0:
-                    operation.DynamicInvoke();
-                    break;
+                int arguments = operation.Method.GetParameters().Length;
 
-                case 1:
-                    operation.DynamicInvoke(operandA);
-                    break;
+                // TODO: Wrap in try-catch
+                try
+                {
+                    switch (arguments)
+                    {
+                        case 0:
+                            operation.DynamicInvoke();
+                            break;
 
-                case 2:
-                    operation.DynamicInvoke(operandA, operandB);
-                    break;
+                        case 1:
+                            operation.DynamicInvoke(operandA);
+                            break;
+
+                        case 2:
+                            operation.DynamicInvoke(operandA, operandB);
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Northbridge.WriteDisplay(0, Encoding.ASCII.GetBytes(ex.Message));
+                }
+
+                Parent.RaiseUpdateDebugger();
+
+                if ((speedTesting) && (cycleCount == 5))
+                {
+                    TimeSpan time = DateTime.Now - startTime;
+                    Speed = 5.0f / time.TotalSeconds;
+                    speedTesting = false;
+                }
             }
-
-            Parent.RaiseUpdateDebugger();
         }
 
         public override void Start()
         {
             Enabled = true;
             Northbridge.Clock.Start();
+            speedTesting = true;
+            startTime = DateTime.Now;
         }
 
         public override void Stop()
@@ -227,6 +281,51 @@ namespace GSVM.Components.Processors
         void Halt()
         {
             SetFlag(CPUFlags.WaitForInterrupt);
+        }
+
+        void CPUID()
+        {
+            uint32_t eax = registers.Read<uint32_t>(Register.EAX);
+            uint32_t ebx, ecx, edx;
+            byte[] str = new byte[4];
+            switch (eax.Value)
+            {
+                case 0:
+                    List<byte> name = new List<byte>(Encoding.ASCII.GetBytes(Name));
+                    while (name.Count < 12) { name.Add(32); }
+                    while (name.Count > 12) { name.RemoveAt(name.Count - 1); }
+
+                    byte[] bName = name.ToArray();
+                    Array.Copy(bName, str, 4);
+                    ebx = new uint32_t(str);
+                    Array.Copy(bName, 4, str, 0, 4);
+                    ecx = new uint32_t(str);
+                    Array.Copy(bName, 8, str, 0, 4);
+                    edx = new uint32_t(str);
+
+                    registers.Write(Register.EBX, ebx);
+                    registers.Write(Register.ECX, ecx);
+                    registers.Write(Register.EDX, edx);
+                    break;
+
+                case 1:
+                    List<byte> speed = new List<byte>(Encoding.ASCII.GetBytes(string.Format("{0:F2} Hz\0", Speed)));
+                    while (speed.Count < 12) { speed.Add(32); }
+                    while (speed.Count > 12) { speed.RemoveAt(speed.Count - 1); }
+
+                    byte[] bSpeed = speed.ToArray();
+                    Array.Copy(bSpeed, str, 4);
+                    ebx = new uint32_t(str);
+                    Array.Copy(bSpeed, 4, str, 0, 4);
+                    ecx = new uint32_t(str);
+                    Array.Copy(bSpeed, 8, str, 0, 4);
+                    edx = new uint32_t(str);
+
+                    registers.Write(Register.EBX, ebx);
+                    registers.Write(Register.ECX, ecx);
+                    registers.Write(Register.EDX, edx);
+                    break;
+            }
         }
 
         void SetFlag(CPUFlags flag)
@@ -258,8 +357,15 @@ namespace GSVM.Components.Processors
 
             uint16_t address = registers.Read<uint16_t>(Register.MAR);
             uint16_t length = registers.Read<uint16_t>(Register.MLR);
-            byte[] value = Northbridge.ReadMemory(address.Value, length.Value);
-            registers.Write(Register.MDR, value);
+            try
+            {
+                byte[] value = Northbridge.ReadMemory(address.Value, length.Value);
+                registers.Write(Register.MDR, value);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                SetFlag(CPUFlags.MemoryError);
+            }
         }
 
         protected void WriteMemory()
@@ -300,6 +406,7 @@ namespace GSVM.Components.Processors
             catch (MemoryAccessException)
             {
                 // Raise interrupt
+                SetFlag(CPUFlags.MemoryError);
             }
         }
     }

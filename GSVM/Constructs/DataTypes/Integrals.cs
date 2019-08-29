@@ -27,6 +27,38 @@ namespace GSVM.Constructs.DataTypes
             value.Address = address;
             return value;
         }
+
+        public static IIntegral BestFit(int size, bool signed = false)
+        {
+            if (size <= 1)
+            {
+                if (signed)
+                    return Int8;
+                else
+                    return UInt8;
+            }
+            else if (size <= 2)
+            {
+                if (signed)
+                    return Int16;
+                else
+                    return UInt16;
+            }
+            else if (size <= 4)
+            {
+                if (signed)
+                    return Int32;
+                else
+                    return UInt32;
+            }
+            else
+            {
+                if (signed)
+                    return Int64;
+                else
+                    return UInt64;
+            }
+        }
     }
 
     public abstract class Integral<T> : IIntegral<T>
@@ -59,6 +91,42 @@ namespace GSVM.Constructs.DataTypes
         public override string ToString()
         {
             return value.ToString();
+        }
+
+        public IIntegral CastTo<TOut>() where TOut : IIntegral
+        {
+            TOut result = default(TOut);
+            byte[] value = new byte[result.Length];
+            byte[] bin = ToBinary();
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                if (i < bin.Length)
+                    value[i] = bin[i];
+                else
+                    value[i] = 0;
+            }
+
+            result.FromBinary(value);
+            return result;
+        }
+
+        public IIntegral CastTo(IIntegral tout)
+        {
+            IIntegral result = tout;
+            byte[] value = new byte[result.Length];
+            byte[] bin = ToBinary();
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                if (i < bin.Length)
+                    value[i] = bin[i];
+                else
+                    value[i] = 0;
+            }
+
+            result.FromBinary(value);
+            return result;
         }
     }
 

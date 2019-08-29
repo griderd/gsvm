@@ -79,7 +79,7 @@ namespace GSVM.Components.Controllers
             }
         }
 
-        public void WriteToPort(int port, IDataType data)
+        public void WriteToPort(int port, byte[] data)
         {
             if (port >= devices.Count)
                 throw new ArgumentOutOfRangeException();
@@ -87,6 +87,30 @@ namespace GSVM.Components.Controllers
             {
                 devices[port].WriteData = data;
                 devices[port].ReadyToWrite = true;
+            }
+        }
+
+        public void WriteToPort(int port, IDataType data)
+        {
+            if (port >= devices.Count)
+                throw new ArgumentOutOfRangeException();
+            else
+            {
+                devices[port].WriteData = data.ToBinary();
+                devices[port].ReadyToWrite = true;
+            }
+        }
+
+        public byte[] ReadFromPort(int port)
+        {
+            if (port >= devices.Count)
+                throw new ArgumentOutOfRangeException();
+            else if (!devices[port].ReadyToRead)
+                throw new ArgumentException();
+            else
+            {
+                devices[port].Acknowledge();
+                return devices[port].ReadData;
             }
         }
 
@@ -100,7 +124,9 @@ namespace GSVM.Components.Controllers
             else
             {
                 devices[port].Acknowledge();
-                return (T)devices[port].ReadData;
+                T data = default(T);
+                data.FromBinary(devices[port].ReadData);
+                return data;
             }
         }
     }

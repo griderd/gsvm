@@ -51,26 +51,30 @@ namespace GSVM
             DiskDriveRequest result = southbridge.ReadFromPort<DiskDriveRequest>(0);
             int length = BitConverter.ToInt32(result.data, 0);
 
-            int chunks = length / 32;
-            int rem = length % 32;
+            int sectorSize = 512;
+            int chunks = length / sectorSize;
+            int rem = length % sectorSize;
             List<byte> bios = new List<byte>();
 
             // Get BIOS
 
             for (int i = 0; i < chunks; i++)
             {
-                request = new DiskDriveRequest(true, (uint)i * 32, 32);
+                request = new DiskDriveRequest(true, (uint)i * 512, 512);
                 southbridge.WriteToPort(0, request);
                 southbridge.ClockTick();
                 result = southbridge.ReadFromPort<DiskDriveRequest>(0);
                 bios.AddRange(result.data);
             }
 
-            request = new DiskDriveRequest(true, (uint)chunks * 32, (uint)rem);
-            southbridge.WriteToPort(0, request);
-            southbridge.ClockTick();
-            result = southbridge.ReadFromPort<DiskDriveRequest>(0);
-            bios.AddRange(result.data);
+            if (rem != 0)
+            {
+                request = new DiskDriveRequest(true, (uint)chunks * 512, (uint)rem);
+                southbridge.WriteToPort(0, request);
+                southbridge.ClockTick();
+                result = southbridge.ReadFromPort<DiskDriveRequest>(0);
+                bios.AddRange(result.data);
+            }
 
             northbridge.WriteMemory(0, bios.ToArray());
 

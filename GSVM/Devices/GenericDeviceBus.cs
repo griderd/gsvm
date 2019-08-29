@@ -16,7 +16,7 @@ namespace GSVM.Devices
         /// <summary>
         /// Data to read from the device.
         /// </summary>
-        IDataType ReadData { get; }
+        byte[] ReadData { get; }
 
         /// <summary>
         /// Gets or sets whether the WriteData port is ready be read from.
@@ -26,7 +26,7 @@ namespace GSVM.Devices
         /// <summary>
         /// Gets or sets the data to write.
         /// </summary>
-        IDataType WriteData { get; set; }
+        byte[] WriteData { get; set; }
 
         void ClockTick();
 
@@ -51,11 +51,11 @@ namespace GSVM.Devices
 
         public TRequest ReadData { get; protected set; }
 
-        IDataType IGenericDeviceBus.ReadData
+        byte[] IGenericDeviceBus.ReadData
         {
             get
             {
-                return ReadData;
+                return ReadData.ToBinary();
             }
         }
 
@@ -63,15 +63,17 @@ namespace GSVM.Devices
 
         public TRequest WriteData { get; protected set; }
 
-        IDataType IGenericDeviceBus.WriteData
+        byte[] IGenericDeviceBus.WriteData
         {
             get
             {
-                return WriteData;
+                return WriteData.ToBinary();
             }
             set
             {
-                WriteData = (TRequest)value;
+                TRequest data = default(TRequest);
+                data.FromBinary(value);
+                WriteData = data;
             }
         }
 

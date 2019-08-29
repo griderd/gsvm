@@ -17,16 +17,16 @@ namespace GSVM.Devices
         public bool read;
         public uint address;
         public uint length;
-        public byte[] data;
         public int error;
+        public byte[] data;
 
         uint _interiorAddress;
 
-        public SmartPointer Pointer { get { return new SmartPointer(_interiorAddress, 45); } }
+        public SmartPointer Pointer { get { return new SmartPointer(_interiorAddress, 525); } }
 
         public uint Address { get { return _interiorAddress; } set { _interiorAddress = value; } }
 
-        public uint Length { get { return 45; } }
+        public uint Length { get { return 525; } }
 
         public DiskDriveRequest(byte[] binary)
         {
@@ -39,11 +39,11 @@ namespace GSVM.Devices
             Range<byte> _length = new Range<byte>(5, sizeof(uint), binary);
             length = BitConverter.ToUInt32(_length.ToArray(), 0);
 
-            Range<byte> _data = new Range<byte>(9, (int)length, binary);
-            data = _data.ToArray();
-
-            Range<byte> _error = new Range<byte>(9 + (int)length, sizeof(int), binary);
+            Range<byte> _error = new Range<byte>(9, sizeof(int), binary);
             error = BitConverter.ToInt32(_error.ToArray(), 0);
+
+            Range<byte> _data = new Range<byte>(13, (int)length, binary);
+            data = _data.ToArray();
         }
 
         public DiskDriveRequest(bool read, uint address, byte[] data, int error) : this()
@@ -52,8 +52,8 @@ namespace GSVM.Devices
             this.read = read;
             this.address = address;
             this.length = (uint)data.Length;
-            if (length > 32)
-                throw new ArgumentException("Data cannot exceed 32 bytes in length.");
+            if (length > 512)
+                throw new ArgumentException("Data cannot exceed 512 bytes in length.");
             this.data = data;
             this.error = error;
         }
@@ -64,8 +64,8 @@ namespace GSVM.Devices
             this.read = read;
             this.address = address;
             this.length = length;
-            if (length > 32)
-                throw new ArgumentException("Data cannot exceed 32 bytes in length.");
+            if (length > 512)
+                throw new ArgumentException("Data cannot exceed 512 bytes in length.");
             this.data = new byte[0];
             this.error = 0;
         }
@@ -76,8 +76,11 @@ namespace GSVM.Devices
             result.Add((byte)(read ? 1 : 0));
             result.AddRange(BitConverter.GetBytes(address));
             result.AddRange(BitConverter.GetBytes(length));
-            result.AddRange(data);
             result.AddRange(BitConverter.GetBytes(error));
+            if (data != null)
+                result.AddRange(data);
+            else
+                result.AddRange(new byte[0]);
 
             return result.ToArray();
         }
@@ -97,11 +100,18 @@ namespace GSVM.Devices
             Range<byte> _length = new Range<byte>(5, sizeof(uint), value);
             length = BitConverter.ToUInt32(_length.ToArray(), 0);
 
-            Range<byte> _data = new Range<byte>(9, (int)length, value);
-            data = _data.ToArray();
-
-            Range<byte> _error = new Range<byte>(9 + (int)length, sizeof(int), value);
+            Range<byte> _error = new Range<byte>(9, sizeof(int), value);
             error = BitConverter.ToInt32(_error.ToArray(), 0);
+
+            if ((length > 0) & (value.Length == length + 13))
+            {
+                Range<byte> _data = new Range<byte>(13, (int)length, value);
+                data = _data.ToArray();
+            }
+            else
+            {
+                data = new byte[0];
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 using GSVM.Constructs;
 using GSVM.Constructs.DataTypes;
 
@@ -16,6 +17,24 @@ namespace GSVM.Components
         public bool ReadOnly { get { return readOnly; } }
 
         public uint Length { get; private set; }
+
+        public string Checksum
+        {
+            get
+            {
+                using (MD5 hash = MD5.Create())
+                {
+                    byte[] checksum = hash.ComputeHash(data);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < checksum.Length; i++)
+                    {
+                        sb.AppendFormat("{0:X2}", checksum[i]);
+                    }
+
+                    return sb.ToString();
+                }
+            }
+        }
 
         public Memory(uint size)
         {
@@ -162,6 +181,11 @@ namespace GSVM.Components
 
         public void Write(SmartPointer ptr, IDataType value)
         {
+            if (value is IIntegral val)
+            {
+                Write(ptr, val);
+                return;
+            }
             if (ptr.Length != value.Length)
                 throw new Exception("Type mismatch.");
 
@@ -175,11 +199,32 @@ namespace GSVM.Components
             }
         }
 
-        public void Copy(uint fromAddress, uint toAddress, uint length)
+        public void Write(SmartPointer ptr, IIntegral value)
         {
-            for (int i = 0; i < length; i++)
+            IIntegral val = value;
+            if (ptr.Length != value.Length)
             {
-                data[toAddress + i] = data[fromAddress + i];
+                val = value.CastTo(Int.BestFit((int)ptr.Length));
+            }
+
+            try
+            {
+                Write(ptr.Address, val.ToBinary());
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public void Copy(uint fromAddress, uint fromLen, uint toAddress, uint toLen)
+        {
+            for (int i = 0; i < toLen; i++)
+            {
+                if (i < fromLen)
+                    data[toAddress + i] = data[fromAddress + i];
+                else
+                    data[toAddress + i] = 0;
             }
         }
     }

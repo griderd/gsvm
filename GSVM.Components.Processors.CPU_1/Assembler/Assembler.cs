@@ -10,13 +10,26 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 {
     public partial class Assembler
     {
+        enum Stage
+        {
+            Preparsing,
+            Preassembly,
+            Postassembly
+        }
+
         int lineNumber = 0;
 
-        string instructionCapture = "([a-zA-Z0-9]{3,})[ ]?([a-zA-Z0-9]*)(, )?([a-zA-Z0-9]*)";
-        string variableCapture = "([a-zA-Z]{1}[a-zA-Z0-9_]*) ([a-zA-Z]{1}[a-zA-Z0-9_]*) (\\-?[0-9]{1,}[bh]?|\".*\"|\'.{1}\'|@[a-zA-Z]{1}[a-zA-Z0-9_]*)";
+        Stage stage = Stage.Preparsing;
+
+        string instructionCapture = "([a-zA-Z0-9]{2,})[ ]?([a-zA-Z0-9_]*)(, )?([a-zA-Z0-9_]*)";
+        string variableCapture = "([a-zA-Z]{1}[a-zA-Z0-9_]*) ([a-zA-Z_]{1}[a-zA-Z0-9_\\[\\]]*) (\\-?[0-9]{1,}[bh]?|\".*\"|\'.{1}\'|@[a-zA-Z]{1}[a-zA-Z0-9_]*)";
+        string arrayCapture = "([a-zA-Z]{1}[a-zA-Z0-9_]*)\\[([0-9]{1,})\\] ([a-zA-Z_]{1}[a-zA-Z0-9_]*) \\{((?:(?:-?[0-9]{1,}[bh]?|\".*\"|\'.{1}\'|@[a-zA-Z]{1}[a-zA-Z0-9_]*),?){1,}|default)\\}";
+        string stringCapture = "string ([a-zA-Z]{1}[a-zA-Z0-9_]*) \"(.*)\"";
 
         List<byte> binary = new List<byte>();
         public byte[] Binary { get { return binary.ToArray(); } }
+
+        Encoding encoding = Encoding.ASCII;
 
         ushort address = 0;
         
@@ -24,7 +37,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         List<Opcode> opcodes;
         Dictionary<string, IDataType> symbols;
         List<string> labels;
-        Dictionary<string, int> unresolvedSymbols;
+        List<UnresolvedSymbol> unresolvedSymbols;
 
         Dictionary<string, string> pragma;
 
@@ -51,7 +64,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             opcodes = new List<Opcode>();
             symbols = new Dictionary<string, IDataType>();
             labels = new List<string>();
-            unresolvedSymbols = new Dictionary<string, int>();
+            unresolvedSymbols = new List<UnresolvedSymbol>();
             sourceCode = new List<string>();
 
             if (pragma == null)
@@ -114,11 +127,16 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
             try
             {
+                stage = Stage.Preparsing;
+                ResolvePragmas();
+
                 for (int i = 0; i < sourceCode.Count; i++)
                 {
                     lineNumber = i + 1;
                     Parse(sourceCode[i]);
                 }
+
+                stage = Stage.Preassembly;
 
                 ResolveSymbols();
                 ResolvePragmas();
@@ -144,6 +162,9 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 }
                 
             }
+
+            stage = Stage.Postassembly;
+            ResolvePragmas();
         }
 
         void Parse(string str)
@@ -153,7 +174,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             if (line == "")
                 return;
 
-            if (line.StartsWith("#"))
+            if (line.StartsWith("#") | line.StartsWith(";"))
                 return;
 
             if (line.EndsWith(":"))
@@ -162,32 +183,21 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 return;
             }
 
-            if (Regex.IsMatch(line, variableCapture))
+            if (Regex.IsMatch(line, stringCapture))
             {
-                if (line.Contains("#"))
-                    RaiseError("Variable line cannot contain comment.");
-                try
-                {
-                    ParseVariable(line);
-                }
-                catch
-                {
-                    throw;
-                }
+                ParseString(line);
             }
-
-            else if (Regex.IsMatch(line, instructionCapture))
+            else if (Regex.IsMatch(line, variableCapture))
             {
-                if (line.Contains("#"))
-                    RaiseError("Instruction line cannot contain comment.");
-                try
-                {
-                    ParseInstruction(line);
-                }
-                catch
-                {
-                    throw;
-                }
+                ParseVariable(line);
+            }
+            else if (Regex.IsMatch(line, arrayCapture))
+            {
+                ParseArray(line);
+            }
+            else if (Regex.IsMatch(line, instructionCapture))
+            {               
+                ParseInstruction(line);
             }
             else
             {
@@ -197,8 +207,13 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
         void ParseLabel(string label)
         {
-            symbols.Add(label, new uint16_t((uint)TrueAddress));
-            labels.Add(label);
+            if (symbols.ContainsKey(label))
+                RaiseError(string.Format("Label \"{0}\" already exists.", label));
+            else
+            {
+                symbols.Add(label, new uint16_t((uint)TrueAddress));
+                labels.Add(label);
+            }
         }
 
         void ParseVariable(string line)
@@ -269,6 +284,8 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                         else
                         {
                             symbols.Add(name, new uint16_t((ushort)ptr, TrueAddress));
+                            address += 2;
+                            buildList.Add(name);
                         }
                     }
                     else if (!symbols.ContainsKey(symb))
@@ -342,6 +359,51 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     else
                         RaiseError("Cannot parse int64 value.");
                     break;
+            }
+        }
+
+        void ParseString(string line)
+        {
+            Match match = Regex.Match(line, stringCapture);
+
+            string name = match.Groups[1].Value;
+            string value = match.Groups[2].Value;
+            string literalValue = StringEscaper.StringLiteral(value);
+            byte[] encoded = encoding.GetBytes(literalValue);
+            int length = literalValue.Length;
+
+            for (int i = 0; i < length; i++)
+            {
+                string ln = string.Format("{0} {1}_{2} {3}", "byte", name, i, encoded[i].ToString());
+                ParseVariable(ln);
+            }
+
+            //address += (ushort)length;
+        }
+
+        void ParseArray(string line)
+        {
+            Match match = Regex.Match(line, arrayCapture);
+
+            string type = match.Groups[1].Value;
+            int length = int.Parse(match.Groups[2].Value);
+            string name = match.Groups[3].Value;
+            string value = match.Groups[4].Value;
+            string[] values;
+            if (value == "default")
+            {
+                values = new string[length];
+                for (int i = 0; i < values.Length; i++) values[i] = "0";
+            }
+            else
+            {
+                values = value.Split(',');
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                string ln = string.Format("{0} {1}_{2} {3}", type, name, i, values[i]);
+                ParseVariable(ln);
             }
         }
 
@@ -624,6 +686,9 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                 case "int":
                     return R_L(Opcodes.intr, Opcodes.intl);
 
+                case "call":
+                    return R_L(Opcodes.callr, Opcodes.calll);
+
                 case "jmp":
                     return R_L(Opcodes.jmpr, Opcodes.jmpl);
 
@@ -653,6 +718,18 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
                 case "deref":
                     return RR_RL(Opcodes.derefr, Opcodes.derefl);
+
+                case "brk":
+                    return NoOps(Opcodes.brk);
+
+                case "cpuid":
+                    return NoOps(Opcodes.cpuid);
+
+                case "out":
+                    return NoOps(Opcodes._out);
+
+                case "in":
+                    return NoOps(Opcodes._in);
             }
 
             return Opcodes.nop;
@@ -661,14 +738,60 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         /// <summary>
         /// Resolves unresolved symbols
         /// </summary>
+        //void ResolveSymbols()
+        //{
+        //    string[] urs = unresolvedSymbols.Keys.ToArray();
+
+        //    for (int i = 0; i < urs.Length; i++)
+        //    {
+        //        string symbol = urs[i];
+        //        int index = unresolvedSymbols[symbol];
+        //        Opcode o = opcodes[index];
+
+        //        if (symbols.ContainsKey(symbol))
+        //        {
+        //            IDataType value = symbols[symbol];
+
+        //            if (o.Flags.HasFlag(OpcodeFlags.Literal1))
+        //            {
+        //                if (value.Address > ushort.MaxValue)
+        //                {
+        //                    RaiseError("32-bit address support not available.");
+        //                }
+        //                else
+        //                {
+        //                    o.OperandA.Value = (ushort)value.Address;
+        //                }
+        //            }
+        //            else if (o.Flags.HasFlag(OpcodeFlags.Literal2))
+        //            {
+        //                if (value.Address > ushort.MaxValue)
+        //                {
+        //                    RaiseError("32-bit address support not available.");
+        //                }
+        //                else
+        //                {
+        //                    o.OperandB.Value = (ushort)value.Address;
+        //                }
+        //            }
+        //            else
+        //            {
+        //                RaiseError(string.Format("Symbol \"{0}\" could not be resolved.", symbol));
+        //            }
+        //        }
+        //        else
+        //        {
+        //            RaiseError(string.Format("Symbol \"{0}\" not found and could not be resolved.", symbol));
+        //        }
+        //    }
+        //}
+
         void ResolveSymbols()
         {
-            string[] urs = unresolvedSymbols.Keys.ToArray();
-
-            for (int i = 0; i < urs.Length; i++)
+            for (int i = 0; i < unresolvedSymbols.Count; i++)
             {
-                string symbol = urs[i];
-                int index = unresolvedSymbols[symbol];
+                string symbol = unresolvedSymbols[i].symbol;
+                int index = unresolvedSymbols[i].location;
                 Opcode o = opcodes[index];
 
                 if (symbols.ContainsKey(symbol))
@@ -713,7 +836,46 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         {
             if (pragma.ContainsKey("len") && symbols.ContainsKey(pragma["len"]))
             {
-                ((uint32_t)(symbols[pragma["len"]])).Value = Length;
+                if (stage == Stage.Preassembly)
+                {
+                    ((uint32_t)(symbols[pragma["len"]])).Value = Length;
+                }
+            }
+            if (pragma.ContainsKey("encoding"))
+            {
+                if (stage == Stage.Preparsing)
+                {
+                    switch (pragma["encoding"])
+                    {
+                        case "ascii":
+                            encoding = Encoding.ASCII;
+                            break;
+
+                        case "utf8":
+                            encoding = Encoding.UTF8;
+                            break;
+
+                        default:
+                            encoding = Encoding.ASCII;
+                            break;
+                    }
+                }
+            }
+            if (pragma.ContainsKey("pad"))
+            {
+                int len;
+
+                if (stage == Stage.Postassembly)
+                {
+                    if (int.TryParse(pragma["pad"], out len))
+                    {
+                        if (binary.Count < len)
+                        {
+                            byte[] padding = new byte[len - binary.Count];
+                            binary.AddRange(padding);
+                        }
+                    }
+                }
             }
         }
     }

@@ -26,7 +26,7 @@ namespace TestProject
 
         static void Main(string[] args)
         {
-            vm = new VirtualMachine(new CPU1(), 16384);
+            //vm = new VirtualMachine(new CPU1(), 16384);
 
             // Write a halt instruction to the start for the time being
             // The memory is otherwise blank (all zeros) and would continuously operate the idle instruction

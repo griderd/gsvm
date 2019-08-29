@@ -226,11 +226,11 @@ namespace GSVM.Components.Processors.CPU_1
         /// </summary>
         intl,
         /// <summary>
-        /// Perform a jump
+        /// Perform an unconditional jump
         /// </summary>
         jmpr,
         /// <summary>
-        /// Perform a jump
+        /// Perform an unconditional jump
         /// </summary>
         jmpl,
         /// <summary>
@@ -266,7 +266,15 @@ namespace GSVM.Components.Processors.CPU_1
         /// </summary>
         cmpl,
         /// <summary>
-        /// Return
+        /// Performs a call
+        /// </summary>
+        callr,
+        /// <summary>
+        /// Performs a call
+        /// </summary>
+        calll,
+        /// <summary>
+        /// Return from a call
         /// </summary>
         ret,
         /// <summary>
@@ -278,10 +286,26 @@ namespace GSVM.Components.Processors.CPU_1
         /// </summary>
         derefl,
         /// <summary>
-        /// Sends the value in AX
+        /// Writes to the port in EAX the value at EBX of length ECX.
         /// </summary>
-        outp,
-        inp
+        _out,
+        /// <summary>
+        /// Reads from the port in EAX to the value at EBX.
+        /// </summary>
+        _in,
+        /// <summary>
+        /// Inserts a programmatic breakpoint, forcing the CPU into debug mode
+        /// </summary>
+        brk,
+        /// <summary>
+        /// Returns cpu information
+        /// </summary>
+        /// <remarks>
+        /// Returns the following information based on the value in EAX:
+        /// 0 - Returns the CPU name as a 12-character ASCII string in EBX, ECX, and EDX
+        /// 1 - Returns the CPU speed as a 12-character ASCII string in EBX, ECX, and EDX
+        /// </remarks>
+        cpuid
     }
 
     public enum Register : UInt16
@@ -326,6 +350,10 @@ namespace GSVM.Components.Processors.CPU_1
         /// Flags register
         /// </summary>
         FLAGS,
+        /// <summary>
+        /// Shared video memory address
+        /// </summary>
+        SVM,
         /// <summary>
         /// 32-bit register A
         /// </summary>

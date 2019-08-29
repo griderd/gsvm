@@ -7,13 +7,14 @@ using GSVM.Constructs.DataTypes;
 
 namespace GSVM.Components
 {
+    [Flags]
     public enum ALUFlags
     {
-        None,
-        Equal,
-        LessThan,
-        GreaterThan,
-        Overflow
+        None = 0,
+        Equal = 1,
+        LessThan = 2,
+        GreaterThan = 4,
+        Overflow = 8
     }
 
     public class ALU

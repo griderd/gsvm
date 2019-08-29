@@ -22,6 +22,7 @@ namespace GSVM.Components.Clocks
         {
             if (!northbridge.CPU.Debug)
             {
+                ThreadState state = clockThread.ThreadState;
                 clockThread.Start(northbridge);
                 ClockEnabled = true;
             }
