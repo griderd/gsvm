@@ -136,7 +136,7 @@ namespace GSVM.Components
                 throw new IndexOutOfRangeException();
         }
 
-        public void Write(uint address, byte[] value)
+        public void Write(uint address, byte[] value, uint bufferSize = uint.MaxValue)
         {
             if (ReadOnly)
                 throw new Exception("Memory is read only.");
@@ -145,6 +145,10 @@ namespace GSVM.Components
             {
                 for (int i = 0; i < value.Length; i++)
                 {
+                    // BUFFER OVERFLOW PROTECTION!
+                    if (i >= bufferSize)
+                        return;
+
                     this.data[address + i] = value[i];
                 }
             }

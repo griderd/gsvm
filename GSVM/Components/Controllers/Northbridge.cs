@@ -32,6 +32,7 @@ namespace GSVM.Components.Controllers
             CPU = cpu;
             cpu.Northbridge = this;
             this.southbridge = southbridge;
+            this.southbridge.northbridge = this;
 
             Memory = ram;
             Graphics = graphics;
@@ -70,10 +71,16 @@ namespace GSVM.Components.Controllers
             }
         }
 
-        public void WriteMemory(uint address, byte[] value)
+        /// <summary>
+        /// Writes the provided value to the provided address. Will limit the write to the provided buffer size.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="value"></param>
+        /// <param name="bufferSize"></param>
+        public void WriteMemory(uint address, byte[] value, uint bufferSize)
         {
             if (CanWriteMemory(address, (uint)value.Length))
-                Memory.Write(address, value);
+                Memory.Write(address, value, bufferSize);
             else
                 throw new MemoryAccessException(new SmartPointer(address, (uint)value.Length), true);
         }
@@ -102,15 +109,31 @@ namespace GSVM.Components.Controllers
 
         public void WriteToPort(uint32_t port, uint32_t addr, uint32_t len)
         {
-            byte[] value = ReadMemory(addr.Value, len.Value);
-            southbridge.WriteToPort((int)port.Value, value);
-
+            try
+            {
+                byte[] value = ReadMemory(addr.Value, len.Value);
+                southbridge.WriteToPort((int)port.Value, value);
+            }
+            catch
+            {
+            }
         }
 
-        public void ReadFromPort(uint32_t port, uint32_t addr)
+        public void ReadFromPort(uint32_t port, uint32_t addr, uint32_t bufferSize)
         {
-            byte[] value = southbridge.ReadFromPort((int)port.Value);
-            WriteMemory(addr.Value, value);
+            try
+            {
+                byte[] value = southbridge.ReadFromPort((int)port.Value);
+                WriteMemory(addr.Value, value, bufferSize);
+            }
+            catch
+            {
+            }
+        }
+
+        public void Interrupt(int channel)
+        {
+            CPU.Interrupt(channel);
         }
     }
 }

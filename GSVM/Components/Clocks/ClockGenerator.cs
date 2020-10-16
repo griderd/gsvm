@@ -14,6 +14,7 @@ namespace GSVM.Components.Clocks
         public static event EventHandler CPUTicked;
 
         public static bool ClockEnabled { get; protected set; }
+        public bool Enabled { get; protected set; }
 
         public ClockGenerator(Northbridge northbridge)
         {
@@ -23,11 +24,13 @@ namespace GSVM.Components.Clocks
         public virtual void Start()
         {
             ClockEnabled = true;
+            Enabled = true;
         }
 
         public virtual void Stop()
         {
             ClockEnabled = false;
+            Enabled = false;
         }
 
         public static void RaiseTick()

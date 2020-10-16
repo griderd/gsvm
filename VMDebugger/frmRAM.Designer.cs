@@ -71,6 +71,7 @@
             this.Controls.Add(this.btnDump);
             this.Name = "frmRAM";
             this.Text = "RAM";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmRAM_FormClosing);
             this.Load += new System.EventHandler(this.frmRAM_Load);
             this.ResumeLayout(false);
 

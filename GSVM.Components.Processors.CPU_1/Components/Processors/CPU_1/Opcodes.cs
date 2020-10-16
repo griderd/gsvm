@@ -106,13 +106,21 @@ namespace GSVM.Components.Processors.CPU_1
         /// <summary>Read from memory, address stored in literal.</summary>
         readl,
         /// <summary>
-        /// Write to memory, address stored in register
+        /// Write to memory, address stored in register, value stored as a register
         /// </summary>
-        writer,
+        writerr,
         /// <summary>
-        /// Write to memory, address stored as literal
+        /// Write to memory, address stored as a register, value stored as a literal
         /// </summary>
-        writel,
+        writerl,
+        /// <summary>
+        /// Write to memory, address stored as a literal, value stored as a register
+        /// </summary>
+        writelr,
+        /// <summary>
+        /// Write to memory, address stored as a literal, value stored as a literal
+        /// </summary>
+        writell,
         /// <summary>
         /// Push a register onto the stack
         /// </summary>
@@ -202,6 +210,22 @@ namespace GSVM.Components.Processors.CPU_1
         /// </summary>
         neg,
         /// <summary>
+        /// Left shift
+        /// </summary>
+        lsl,
+        /// <summary>
+        /// Left shift
+        /// </summary>
+        lsr,
+        /// <summary>
+        /// Right shift
+        /// </summary>
+        rsl,
+        /// <summary>
+        /// Right shift
+        /// </summary>
+        rsr,
+        /// <summary>
         /// Pop a value from the stack and store it in a register
         /// </summary>
         pop,
@@ -290,8 +314,9 @@ namespace GSVM.Components.Processors.CPU_1
         /// </summary>
         _out,
         /// <summary>
-        /// Reads from the port in EAX to the value at EBX.
+        /// Reads from the port in EAX to the value at EBX of length ECX.
         /// </summary>
+        /// <remarks>ECX is maximum buffer size. If the incoming data exceeds this length, the excess is not written. This is to prevent buffer overruns.</remarks>
         _in,
         /// <summary>
         /// Inserts a programmatic breakpoint, forcing the CPU into debug mode
@@ -305,7 +330,39 @@ namespace GSVM.Components.Processors.CPU_1
         /// 0 - Returns the CPU name as a 12-character ASCII string in EBX, ECX, and EDX
         /// 1 - Returns the CPU speed as a 12-character ASCII string in EBX, ECX, and EDX
         /// </remarks>
-        cpuid
+        cpuid,
+        /// <summary>
+        /// Set Array (Literal, Literal). Sets the array base pointer and element length. Sets the index to 0.
+        /// </summary>
+        sall,
+        /// <summary>
+        /// Set Array (Literal, Register)
+        /// </summary>
+        salr,
+        /// <summary>
+        /// Set Array (Register, Literal)
+        /// </summary>
+        sarl,
+        /// <summary>
+        /// Set Array (Literal, Literal)
+        /// </summary>
+        sarr,
+        /// <summary>
+        /// Increment array pointer to the next element
+        /// </summary>
+        inca,
+        /// <summary>
+        /// Decrement array pointer to the previous element
+        /// </summary>
+        deca,
+        /// <summary>
+        /// Set Array Index (Literal), sets the Array Element Index (AEI) and updates the Array Element Pointer (AEP) at the same time.
+        /// </summary>
+        sail,
+        /// <summary>
+        /// Set Array Index (Register)
+        /// </summary>
+        sair
     }
 
     public enum Register : UInt16
@@ -417,6 +474,22 @@ namespace GSVM.Components.Processors.CPU_1
         /// <summary>
         /// Upper 8-bit register D
         /// </summary>
-        DH
+        DH,
+        /// <summary>
+        /// Array base pointer
+        /// </summary>
+        ABP,
+        /// <summary>
+        /// Array element index
+        /// </summary>
+        AEI,
+        /// <summary>
+        /// Array element length
+        /// </summary>
+        AEL,
+        /// <summary>
+        /// Array element pointer
+        /// </summary>
+        AEP
     }
 }

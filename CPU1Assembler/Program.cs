@@ -32,7 +32,10 @@ namespace CPU1Assembler
                 Console.WriteLine(ex.Message);
             }
 
-            File.WriteAllLines("prep_" + output + "_.asm", code);
+            FileInfo outputFile = new FileInfo(output);
+
+
+            File.WriteAllLines(Path.Combine(outputFile.DirectoryName, "prep_" + outputFile.Name + "_.asm"), code);
 
             try
             {

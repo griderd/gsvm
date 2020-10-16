@@ -27,5 +27,12 @@ namespace VMDebugger
         {
             monitor.RefreshScreen();
         }
+
+        private void frmMonitor_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            tmrRefresh.Enabled = false;
+            adapter.Dispose();
+            monitor.Dispose();
+        }
     }
 }

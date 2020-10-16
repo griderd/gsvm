@@ -16,6 +16,7 @@ namespace GSVM.Peripherals.Monitors
     {
         DisplayAdapter adapter;
         public DisplayAdapter Adapter { get { return adapter; } set { adapter = value; } }
+        bool firstFrameRendered = false;
 
         public MonitorControl()
         {
@@ -41,6 +42,7 @@ namespace GSVM.Peripherals.Monitors
                 }
 
                 SwapBuffers();
+                firstFrameRendered = true;
             }
         }
 
@@ -55,6 +57,8 @@ namespace GSVM.Peripherals.Monitors
 
                 GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 
+                if (firstFrameRendered)
+                    GL.DeleteTexture(1);
                 GL.GenTextures(1, out tex);
                 GL.BindTexture(TextureTarget.Texture2D, tex);
 
@@ -70,7 +74,6 @@ namespace GSVM.Peripherals.Monitors
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
             }
 
-            GC.Collect();
             return tex;
         }
 

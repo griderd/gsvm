@@ -9,25 +9,28 @@ using GSVM.Constructs.DataTypes;
 
 namespace GSVM.Components.Controllers
 {
-    public class Southbridge
+    public class Southbridge : GenericSerialBus
     {
-        MemoryMap<int> ports;
+        internal Northbridge northbridge;
+        //MemoryMap<int> ports;
         List<IGenericDeviceBus> devices;
-
-        bool[] hasDrive;
+        Dictionary<int, int> interruptChannels;
 
         public Southbridge(DiskDrive cmos)
         {
+            deviceType = 1;
+            GenerateID();
             devices = new List<IGenericDeviceBus>();
-            ports = new MemoryMap<int>();
-            hasDrive = new bool[5];
+            //ports = new MemoryMap<int>();
+            interruptChannels = new Dictionary<int, int>();
 
             InitializePorts();
-            AddDrive(cmos);
+            AddDevice(cmos);
         }
 
         /// <summary>
         /// Initializes the ports with a total of 5 disk drive ports, the first is CMOS. Everything else should be GSB.
+        /// Port 5 is reserved for the Southbridge.
         /// </summary>
         public virtual void InitializePorts()
         {
@@ -39,26 +42,12 @@ namespace GSVM.Components.Controllers
                 if (i < 5)
                     length = 45;
 
-                ports.Map(i, (uint)index, (uint)length);
+                //ports.Map(i, (uint)index, (uint)length);
                 index = index + length;
+                interruptChannels.Add(i, 0);
             }
 
-            devices.AddRange(new DummyDrive[] { new DummyDrive(), new DummyDrive(), new DummyDrive(),
-                                                    new DummyDrive(), new DummyDrive() });
-        }
-
-        public bool AddDrive(DiskDrive drive)
-        {
-            for (int i = 0; i < 5; i++)
-            {
-                if (!hasDrive[i])
-                {
-                    hasDrive[i] = true;
-                    devices[i] = drive;
-                    return true;
-                }
-            }
-            return false;
+            AddDevice(this);
         }
 
         public void AddDevice(IGenericDeviceBus device)
@@ -71,16 +60,38 @@ namespace GSVM.Components.Controllers
             devices.RemoveAt(port);
         }
 
-        public void ClockTick()
+        public override void ClockTick()
         {
+            if (ReadyToWrite)
+            {
+                interruptChannels[WriteData.LowerWord] = WriteData.UpperWord;
+            }
+
             for (int i = 0; i < devices.Count; i++)
             {
+                if (devices[i] is Southbridge)
+                    continue;
+
                 devices[i].ClockTick();
+                //if (i != 5)
+                //{
+                //    if (devices[i].Interrupt)
+                //    {
+                //        northbridge.Interrupt(interruptChannels[i]);
+                //        devices[i].Interrupt = false;
+                //    }
+                //    devices[i].ClockTick();
+                //}
             }
+
+            base.ClockTick();
         }
 
         public void WriteToPort(int port, byte[] data)
         {
+            if (data.Length == 0)
+                return;
+
             if (port >= devices.Count)
                 throw new ArgumentOutOfRangeException();
             else
@@ -124,10 +135,15 @@ namespace GSVM.Components.Controllers
             else
             {
                 devices[port].Acknowledge();
-                T data = default(T);
-                data.FromBinary(devices[port].ReadData);
+                T data = (T)Activator.CreateInstance<T>();
+                ((T)data).FromBinary(devices[port].ReadData);
                 return data;
             }
+        }
+
+        protected override bool InterruptChannelOk(uint channel)
+        {
+            return true;
         }
     }
 }

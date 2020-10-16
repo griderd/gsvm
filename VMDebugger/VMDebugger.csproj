@@ -121,6 +121,10 @@
       <Project>{46fb98a3-b251-4119-8e29-077b23d8fdb4}</Project>
       <Name>GSVM</Name>
     </ProjectReference>
+    <ProjectReference Include="..\IODevices\IODevices.csproj">
+      <Project>{005f605f-28f6-40dc-9b20-87c1e55dd45b}</Project>
+      <Name>IODevices</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Monitors\Monitors.csproj">
       <Project>{cc61eeb8-d2d4-4f63-8112-43488b38edd3}</Project>
       <Name>Monitors</Name>

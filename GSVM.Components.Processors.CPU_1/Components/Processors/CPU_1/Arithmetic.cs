@@ -69,6 +69,26 @@ namespace GSVM.Components.Processors
             ALUCopyFlags();
         }
 
+        void LeftShift(Register_t a, Register_t b)
+        {
+            ALUOperation(a, b, new ALU.ALUOperation(alu.LeftShift));
+        }
+
+        void LeftShift(Register_t a, uint16_t b)
+        {
+            ALUOperation(a, b, new ALU.ALUOperation(alu.LeftShift));
+        }
+
+        void RightShift(Register_t a, Register_t b)
+        {
+            ALUOperation(a, b, new ALU.ALUOperation(alu.RightShift));
+        }
+
+        void RightShift(Register_t a, uint16_t b)
+        {
+            ALUOperation(a, b, new ALU.ALUOperation(alu.RightShift));
+        }
+
         void Add(Register_t  a, Register_t  b)
         {
             ALUOperation(a, b, new ALU.ALUOperation(alu.Add));

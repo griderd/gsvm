@@ -43,13 +43,15 @@ namespace GSVM
         public void Start()
         {
             // Get length
-            DiskDriveRequest request = new DiskDriveRequest(true, 100, 0);
-            request.error = 0xff;
 
-            southbridge.WriteToPort(0, request);
+            int cmos = 1;
+
+            DiskDriveRequest request = new DiskDriveRequest(DiskDrive.LEN, 0, 0);
+
+            southbridge.WriteToPort(cmos, request);
             southbridge.ClockTick();
-            DiskDriveRequest result = southbridge.ReadFromPort<DiskDriveRequest>(0);
-            int length = BitConverter.ToInt32(result.data, 0);
+            DiskDriveRequest result = southbridge.ReadFromPort<DiskDriveRequest>(cmos);
+            int length = (int)result.data;
 
             int sectorSize = 512;
             int chunks = length / sectorSize;
@@ -60,23 +62,23 @@ namespace GSVM
 
             for (int i = 0; i < chunks; i++)
             {
-                request = new DiskDriveRequest(true, (uint)i * 512, 512);
-                southbridge.WriteToPort(0, request);
+                request = new DiskDriveRequest(DiskDrive.READ, (uint)i * 512, 512);
+                southbridge.WriteToPort(cmos, request);
                 southbridge.ClockTick();
-                result = southbridge.ReadFromPort<DiskDriveRequest>(0);
-                bios.AddRange(result.data);
+                result = southbridge.ReadFromPort<DiskDriveRequest>(cmos);
+                bios.AddRange(result.diskData);
             }
 
             if (rem != 0)
             {
-                request = new DiskDriveRequest(true, (uint)chunks * 512, (uint)rem);
-                southbridge.WriteToPort(0, request);
+                request = new DiskDriveRequest(DiskDrive.READ, (uint)chunks * 512, (uint)rem);
+                southbridge.WriteToPort(cmos, request);
                 southbridge.ClockTick();
-                result = southbridge.ReadFromPort<DiskDriveRequest>(0);
-                bios.AddRange(result.data);
+                result = southbridge.ReadFromPort<DiskDriveRequest>(cmos);
+                bios.AddRange(result.diskData);
             }
 
-            northbridge.WriteMemory(0, bios.ToArray());
+            northbridge.WriteMemory(0, bios.ToArray(), (uint)bios.Count);
 
             cpu.Start();
         }
@@ -93,7 +95,12 @@ namespace GSVM
 
         public void LoadMemory(byte[] data)
         {
-            northbridge.WriteMemory(0, data);
+            if (data == null)
+                throw new ArgumentNullException();
+            if (data.Length == 0)
+                throw new ArgumentException();
+
+            northbridge.WriteMemory(0, data, (uint)data.Length);
             //memory.Write(0, data);
         }
 

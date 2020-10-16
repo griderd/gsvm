@@ -46,6 +46,7 @@
     <Compile Include="Assembler\StringEscaper.cs" />
     <Compile Include="Assembler\SyntaxTree.cs" />
     <Compile Include="Assembler\UnresolvedSymbol.cs" />
+    <Compile Include="Components\Processors\CPU_1\ArrayOperations.cs" />
     <Compile Include="Components\Processors\CPU1.cs" />
     <Compile Include="Components\Processors\CPU_1\Arithmetic.cs" />
     <Compile Include="Components\Processors\CPU_1\Branching.cs" />

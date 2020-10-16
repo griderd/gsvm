@@ -12,61 +12,122 @@ namespace GSVM.Devices
     /// <summary>
     /// Transfers 4 bytes at a time.
     /// </summary>
-    public struct GenericSerialRequest : IDataType
+    public class GenericSerialRequest : IDataType
     {
-        public bool read;
-        public byte error;
-        public byte[] data;
+        public byte control;
+        public uint data;
 
-        uint address;
+        uint interioraddress;
+
+        public byte[] BinaryData
+        {
+            get
+            {
+                return BitConverter.GetBytes(data);
+            }
+            set
+            {
+                if (value == null)
+                    throw new NullReferenceException();
+                if (value.Length != 4)
+                    throw new ArgumentException();
+                data = BitConverter.ToUInt32(value, 0);
+            }
+        }
+
+        /// <summary>
+        /// Gets the lower (first) word in the data field.
+        /// </summary>
+        public ushort LowerWord
+        {
+            get
+            {
+                byte[] dw = BinaryData;
+                byte[] w = new byte[] { dw[0], dw[1] };
+                return BitConverter.ToUInt16(w, 0);
+            }
+            set
+            {
+                byte[] dw = BinaryData;
+                byte[] w = BitConverter.GetBytes(value);
+                dw[0] = w[0];
+                dw[1] = w[1];
+                BinaryData = dw;
+            }
+        }
+
+        /// <summary>
+        /// Gets the upper (second) word in the data field.
+        /// </summary>
+        public ushort UpperWord
+        {
+            get
+            {
+                byte[] dw = BinaryData;
+                byte[] w = new byte[] { dw[2], dw[3] };
+                return BitConverter.ToUInt16(w, 0);
+            }
+            set
+            {
+                byte[] dw = BinaryData;
+                byte[] w = BitConverter.GetBytes(value);
+                dw[0] = w[2];
+                dw[1] = w[3];
+                BinaryData = dw;
+            }
+        }
+
+        public GenericSerialRequest()
+        {
+            interioraddress = 0;
+            control = 0;
+            data = 0;
+        }
 
         public GenericSerialRequest(byte[] binary)
         {
-            address = 0;
-            read = binary[0] != 0;
+            interioraddress = 0;
 
-            error = binary[1];
+            control = binary[0];
 
-            Range<byte> _data = new Range<byte>(2, 4, binary);
-            data = _data.ToArray();
+            Range<byte> _data = new Range<byte>(1, 4, binary);
+            data = BitConverter.ToUInt32(_data.ToArray(), 0);
         }
 
-        public GenericSerialRequest(bool read, byte error, byte[] data) : this()
+        public GenericSerialRequest(byte control, uint data)
         {
-            this.read = read;
             this.data = data;
-            this.error = error;
+            this.control = control;
         }
 
-        public SmartPointer Pointer { get { return new SmartPointer(address, Length); } }
+        public SmartPointer Pointer { get { return new SmartPointer(interioraddress, Length); } }
 
-        public uint Address { get { return address; } set { address = value; } }
+        public uint InteriorAddress { get { return interioraddress; } set { interioraddress = value; } }
 
         public uint Length { get { return 6; } }
 
-        public GenericSerialRequest FromBinary(byte[] binary)
+        public uint Address { get { return interioraddress; } set { interioraddress = value; } }
+
+        public virtual void FromBinary(byte[] binary)
         {
-            throw new NotImplementedException();
+            control = binary[0];
+
+            Range<byte> _data = new Range<byte>(1, 4, binary);
+            data = BitConverter.ToUInt32(_data.ToArray(), 0);
         }
 
-        public byte[] ToBinary()
+        public virtual byte[] ToBinary()
         {
             List<byte> result = new List<byte>();
-            result.Add((byte)(read ? 1 : 0));
-            result.Add(error);
-            result.AddRange(data);
+            result.Add(control);
+            result.AddRange(BinaryData);
 
             return result.ToArray();
         }
 
         void IDataType.FromBinary(byte[] value)
         {
-            read = value[0] != 0;
-
-            error = value[1];
-
-            Range<byte> _data = new Range<byte>(2, 4, value);
-            data = _data.ToArray();
+            FromBinary(value);
         }
     }
 }

@@ -11,6 +11,7 @@ using GSVM.Components;
 using GSVM.Components.Processors;
 using System.ComponentModel.Design;
 using Be.Windows.Forms;
+using System.IO;
 
 namespace VMDebugger
 {
@@ -52,56 +53,24 @@ namespace VMDebugger
             StringBuilder hex = new StringBuilder();
 
             byte[] dump = memory.Read(0, memory.Length);
-            //byteViewer.SetBytes(dump);
-            hexBox.ByteProvider = new DynamicByteProvider(dump);
+
+            byteProvider.DeleteBytes(0, byteProvider.Length);
+            byteProvider.InsertBytes(0, dump);
             hexBox.Select(select, selLength);
-            
-
-            //for (int i = 0; i < dump.Length; i++)
-            //{
-
-            //    hex.AppendFormat("{0:X2} ", dump[i]);
-            //}
-
-            //for (int i = 0; i < memory.Length; i++)
-            //{
-            //    if (i % 16 == 0)
-            //        hex.Append(i.ToString("X3"));
-            //    hex.Append("  ");
-
-            //    if (registers.GetMAR() == i)
-            //    {
-            //        select = hex.Length;
-            //        selLength = registers.GetMLR() * 3;
-            //    }
-
-            //    if (chkHexDigits.Checked)
-            //    {
-
-            //        hex.Append(((int)memory.Data[i]).ToString("X2"));
-            //        selLength = 2;
-            //    }
-            //    else
-            //    {
-            //        hex.Append(' ');
-            //        hex.Append(memory.Data[i]);
-            //    }
-
-            //    if ((i + 1) % 16 == 0)
-            //        hex.AppendLine();
-            //}
-            //txtHexView.Text = hex.ToString();
-            //txtHexView.Select(select, selLength);
         }
 
         private void btnDump_Click(object sender, EventArgs e)
         {
-            //File.WriteAllBytes("ram.bin", memory.Data);
+            File.WriteAllBytes("memdump.bin", memory.Read(0, memory.Length));
         }
 
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
             //RefreshText();
+        }
+
+        private void frmRAM_FormClosing(object sender, FormClosingEventArgs e)
+        {
         }
     }
 }

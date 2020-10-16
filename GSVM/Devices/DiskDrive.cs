@@ -8,84 +8,103 @@ using GSVM.Components;
 namespace GSVM.Devices
 {
     public class DiskDrive : GenericDeviceBus<DiskDriveRequest>
-    {
+    {    
+        public const byte LEN = 6;
+        public const byte PING = 7;
+        public const byte REPLY = 8;
+
         protected Memory memory;
         public bool ReadOnly { get; private set; }
 
-        public DiskDrive(uint size, bool isReadOnly = false)
+        private DiskDrive(bool isReadOnly = false)
         {
-            memory = new Memory(size);
             ReadOnly = isReadOnly;
+            deviceType = 2;
+            GenerateID();
         }
 
-        public DiskDrive(Memory memory, bool isReadOnly = false)
+        public DiskDrive(uint size, bool isReadOnly = false) : this(isReadOnly)
+        {
+            memory = new Memory(size);    
+        }
+
+        public DiskDrive(Memory memory, bool isReadOnly = false) : this(isReadOnly)
         {
             this.memory = memory;
-            ReadOnly = isReadOnly;
         }
     
         public override void ClockTick()
         {
+            if (readData == null)
+                readData = new DiskDriveRequest();
+
             if (ReadyToWrite)
             {
-                DiskDriveRequest result = new DiskDriveRequest();
+                readData.length = 0;
+                readData.diskData = new byte[0];
+                readData.data = 0;
+                readData.control = 0;
 
-                result.address = WriteData.address;
-                result.length = WriteData.length;
-                result.error = 0;
-
-                if (WriteData.read)
+                switch (WriteData.control)
                 {
-                    // If a GetLength command is sent
-                    if (WriteData.error == 255)
-                    {
-                        result.data = BitConverter.GetBytes(memory.Length);
-                        result.length = 4;
-                        result.address = 0;
-                    }
-                    else if (WriteData.error == 254)     // If a handshake command is sent
-                    {
-                        // Send handshake back
-                        result.data = new byte[] { 254 };
-                        result.length = 1;
-                        result.address = 0;
-                    }
-                    else
-                    {
+                    // READ
+                    case READ:
+                        readData.control = ACK;
+                        readData.data = writeData.data;
+                        readData.length = writeData.length;
                         try
                         {
-                            result.data = memory.Read(WriteData.address, WriteData.length);
+                            readData.diskData = memory.Read(writeData.data, writeData.length);
                         }
                         catch
                         {
-                            result.error = 1;
+                            // error
+                            readData.control = ERROR;
+                            readData.data = 0;
                         }
-                    }
-                }
-                else
-                {
-                    if (ReadOnly)
-                    {
-                        result.error = -1;
-                    }
-                    else
-                    {
-                        try
-                        {
-                            memory.Write(WriteData.address, WriteData.data);
-                        }
-                        catch
-                        {
-                            result.error = 1;
-                        }
-                    }
-                }
+                        break;
 
-                ReadData = result;
-                ReadyToRead = true;
-                ReadyToWrite = false;
+                    case WRITE:
+                        if (ReadOnly)
+                        {
+                            readData.control = ERROR;
+                            readData.data = 1;   // cannot overwrite read-only memory
+                        }
+                        else
+                        {
+                            readData.control = ACK;
+                            readData.data = WriteData.data;
+                            readData.length = WriteData.length;
+                            try
+                            {
+                                memory.Write(writeData.data, writeData.diskData);
+                            }
+                            catch
+                            {
+                                readData.control = ERROR;   // error
+                                readData.data = 0;      // Unknown
+                            }
+                        }
+                        break;
+
+                    case LEN:
+                        readData.control = ACK;   // ack
+                        readData.data = memory.Length;
+                        break;
+
+                    case PING:
+                        readData.control = REPLY;   // reply
+                        break;
+
+                }
             }
-                
+
+            base.ClockTick();
+        }
+
+        protected override bool InterruptChannelOk(uint channel)
+        {
+            return true;
         }
     }
 }

@@ -98,6 +98,8 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         {
             int inc = "%include ".Length;
             string path = line.Substring(inc, line.Length - inc);
+            if (definitions.ContainsKey(path))
+                path = definitions[path];
 
             try
             {

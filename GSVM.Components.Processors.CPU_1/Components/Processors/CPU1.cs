@@ -49,6 +49,10 @@ namespace GSVM.Components.Processors
                 {
                     Northbridge.Clock.Stop();
                 }
+                else if (!Northbridge.Clock.Enabled)
+                {
+                    Northbridge.Clock.Start();
+                }
             }
         }
 
@@ -94,6 +98,10 @@ namespace GSVM.Components.Processors
             registers.Subdivide(Register.EDX, Register.DX);
             registers.Subdivide(Register.DX, Register.DL, Register.DH);
 
+            registers.Append<uint16_t>(Register.ABP);
+            registers.Append<uint16_t>(Register.AEI);
+            registers.Append<uint16_t>(Register.AEL);
+            registers.Append<uint16_t>(Register.AEP);
 
             registers.BuildMemory();
             SetupOpCodes();
@@ -108,8 +116,10 @@ namespace GSVM.Components.Processors
             opcodes.Add(Opcodes.movl, new Action<Register_t, uint16_t>(MoveL));
             opcodes.Add(Opcodes.readr, new Action<Register_t, Register_t>(Read));
             opcodes.Add(Opcodes.readl, new Action<Register_t, uint16_t>(Read));
-            opcodes.Add(Opcodes.writer, new Action<Register_t, Register_t>(Write));
-            opcodes.Add(Opcodes.writel, new Action<uint16_t, Register_t>(Write));
+            opcodes.Add(Opcodes.writerr, new Action<Register_t, Register_t>(Write));
+            opcodes.Add(Opcodes.writelr, new Action<uint16_t, Register_t>(Write));
+            opcodes.Add(Opcodes.writell, new Action<uint16_t, uint16_t>(Write));
+            opcodes.Add(Opcodes.writerl, new Action<Register_t, uint16_t>(Write));
             opcodes.Add(Opcodes.pushr, new Action<Register_t>(PushRegister));
             opcodes.Add(Opcodes.pushl, new Action<uint16_t>(PushLiteral));
             opcodes.Add(Opcodes.pusha, new Action(PushAll));
@@ -136,11 +146,17 @@ namespace GSVM.Components.Processors
             opcodes.Add(Opcodes.neg, new Action<Register_t>(Neg));
             opcodes.Add(Opcodes.cmpr, new Action<Register_t, Register_t>(Compare));
             opcodes.Add(Opcodes.cmpl, new Action<Register_t, uint16_t>(Compare));
+            opcodes.Add(Opcodes.lsr, new Action<Register_t, Register_t>(LeftShift));
+            opcodes.Add(Opcodes.lsl, new Action<Register_t, uint16_t>(LeftShift));
+            opcodes.Add(Opcodes.rsr, new Action<Register_t, Register_t>(RightShift));
+            opcodes.Add(Opcodes.rsl, new Action<Register_t, uint16_t>(RightShift));
 
             opcodes.Add(Opcodes.hlt, new Action(Halt));
 
             opcodes.Add(Opcodes._out, new Action(_out));
             opcodes.Add(Opcodes._in, new Action(_in));
+            opcodes.Add(Opcodes.intr, new Action<Register_t>(intr));
+            opcodes.Add(Opcodes.intl, new Action<uint16_t>(intl));
 
             opcodes.Add(Opcodes.jmpr, new Action<Register_t>(JumpR));
             opcodes.Add(Opcodes.jmpl, new Action<uint16_t>(JumpL));
@@ -160,6 +176,15 @@ namespace GSVM.Components.Processors
             opcodes.Add(Opcodes.brk, new Action(Brk));
 
             opcodes.Add(Opcodes.cpuid, new Action(CPUID));
+
+            opcodes.Add(Opcodes.sall, new Action<uint16_t, uint16_t>(sall));
+            opcodes.Add(Opcodes.salr, new Action<uint16_t, Register_t>(salr));
+            opcodes.Add(Opcodes.sarl, new Action<Register_t, uint16_t>(sarl));
+            opcodes.Add(Opcodes.sarr, new Action<Register_t, Register_t>(sarr));
+            opcodes.Add(Opcodes.inca, new Action(inca));
+            opcodes.Add(Opcodes.deca, new Action(deca));
+            opcodes.Add(Opcodes.sail, new Action<uint16_t>(sail));
+            opcodes.Add(Opcodes.sair, new Action<Register_t>(sair));
         }
 
         public override byte[] GetRegisters()
@@ -216,7 +241,6 @@ namespace GSVM.Components.Processors
 
                 if (opcode.Flags.HasFlag(OpcodeFlags.Literal2))
                     operandB = opcode.OperandB;
-
             }
         }
 
@@ -281,6 +305,24 @@ namespace GSVM.Components.Processors
         void Halt()
         {
             SetFlag(CPUFlags.WaitForInterrupt);
+        }
+
+        public override void Interrupt(int channel)
+        {
+            Interrupt((ushort)channel);
+        }
+
+        void Interrupt(ushort interrupt)
+        {
+            // Get the interrupt address
+            MoveR(Register.MAR, Register.IDT);
+            Add(Register.MAR, new uint16_t((ushort)(interrupt * 2)));
+            MoveL(Register.MLR, 4);
+            ReadMemory();
+
+            //// call that address as a function
+            ushort address = registers.Read<uint16_t>(Register.MDR16);
+            CallR(Register.MDR16);
         }
 
         void CPUID()
@@ -401,7 +443,7 @@ namespace GSVM.Components.Processors
 
             try
             {
-                Northbridge.WriteMemory(address, value);
+                Northbridge.WriteMemory(address, value, (uint)value.Length);
             }
             catch (MemoryAccessException)
             {

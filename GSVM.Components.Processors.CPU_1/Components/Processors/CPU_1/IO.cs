@@ -25,8 +25,20 @@ namespace GSVM.Components.Processors
         {
             uint32_t port = registers.Read<uint32_t>(Register.EAX);
             uint32_t address = registers.Read<uint32_t>(Register.EBX);
+            uint32_t buffer = registers.Read<uint32_t>(Register.ECX);
 
-            Northbridge.ReadFromPort(port, address);
+            Northbridge.ReadFromPort(port, address, buffer);
+        }
+
+        void intr(Register_t r)
+        {
+            uint16_t value = registers.Read<uint16_t>(r);
+            Interrupt(value.Value);
+        }
+
+        void intl(uint16_t l)
+        {
+            Interrupt(l.Value);
         }
     }
 }

@@ -29,9 +29,15 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.monitor = new GSVM.Peripherals.Monitors.MonitorControl();
             this.tmrRefresh = new System.Windows.Forms.Timer(this.components);
+            this.monitor = new GSVM.Peripherals.Monitors.MonitorControl();
             this.SuspendLayout();
+            // 
+            // tmrRefresh
+            // 
+            this.tmrRefresh.Enabled = true;
+            this.tmrRefresh.Interval = 16;
+            this.tmrRefresh.Tick += new System.EventHandler(this.tmrRefresh_Tick);
             // 
             // monitor
             // 
@@ -44,12 +50,6 @@
             this.monitor.TabIndex = 0;
             this.monitor.VSync = false;
             // 
-            // tmrRefresh
-            // 
-            this.tmrRefresh.Enabled = true;
-            this.tmrRefresh.Interval = 16;
-            this.tmrRefresh.Tick += new System.EventHandler(this.tmrRefresh_Tick);
-            // 
             // frmMonitor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -58,13 +58,13 @@
             this.Controls.Add(this.monitor);
             this.Name = "frmMonitor";
             this.Text = "Monitor";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMonitor_FormClosing);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private GSVM.Peripherals.Monitors.MonitorControl monitor;
         private System.Windows.Forms.Timer tmrRefresh;
+        private GSVM.Peripherals.Monitors.MonitorControl monitor;
     }
 }

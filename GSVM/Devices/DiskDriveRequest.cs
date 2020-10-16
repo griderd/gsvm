@@ -12,106 +12,91 @@ namespace GSVM.Devices
     /// <summary>
     /// Allows the transfer of a maximum of 32 bytes at a time.
     /// </summary>
-    public struct DiskDriveRequest : IDataType
+    public class DiskDriveRequest : GenericSerialRequest
     {
-        public bool read;
-        public uint address;
+        // byte control;
+        // uint data;
         public uint length;
-        public int error;
-        public byte[] data;
+        public byte[] diskData;
 
         uint _interiorAddress;
 
-        public SmartPointer Pointer { get { return new SmartPointer(_interiorAddress, 525); } }
+        public new uint Length { get { return 521; } }
 
-        public uint Address { get { return _interiorAddress; } set { _interiorAddress = value; } }
-
-        public uint Length { get { return 525; } }
+        public DiskDriveRequest()
+            : base()
+        {
+            length = 0;
+            diskData = new byte[0];
+        }
 
         public DiskDriveRequest(byte[] binary)
+            : base(binary)
         {
-            _interiorAddress = 0;
-            read = binary[0] != 0;
-
-            Range<byte> _address = new Range<byte>(1, sizeof(uint), binary);
-            address = BitConverter.ToUInt32(_address.ToArray(), 0);
-
             Range<byte> _length = new Range<byte>(5, sizeof(uint), binary);
             length = BitConverter.ToUInt32(_length.ToArray(), 0);
 
-            Range<byte> _error = new Range<byte>(9, sizeof(int), binary);
-            error = BitConverter.ToInt32(_error.ToArray(), 0);
-
             Range<byte> _data = new Range<byte>(13, (int)length, binary);
-            data = _data.ToArray();
+            diskData = _data.ToArray();
         }
 
-        public DiskDriveRequest(bool read, uint address, byte[] data, int error) : this()
+        public DiskDriveRequest(byte control, uint address, byte[] data)
+            : base(control, address)
         {
-            _interiorAddress = 0;
-            this.read = read;
-            this.address = address;
             this.length = (uint)data.Length;
             if (length > 512)
                 throw new ArgumentException("Data cannot exceed 512 bytes in length.");
-            this.data = data;
-            this.error = error;
+            this.diskData = data;
         }
 
-        public DiskDriveRequest(bool read, uint address, uint length) : this()
+        public DiskDriveRequest(byte control, uint address, uint length)
+            : base(control, address)
         {
-            _interiorAddress = 0;
-            this.read = read;
-            this.address = address;
             this.length = length;
             if (length > 512)
                 throw new ArgumentException("Data cannot exceed 512 bytes in length.");
-            this.data = new byte[0];
-            this.error = 0;
+            this.diskData = new byte[0];
         }
 
-        public byte[] ToBinary()
+        public override byte[] ToBinary()
         {
             List<byte> result = new List<byte>();
-            result.Add((byte)(read ? 1 : 0));
-            result.AddRange(BitConverter.GetBytes(address));
+            result.AddRange(base.ToBinary());
             result.AddRange(BitConverter.GetBytes(length));
-            result.AddRange(BitConverter.GetBytes(error));
-            if (data != null)
-                result.AddRange(data);
+            if (diskData != null)
+                result.AddRange(diskData);
             else
                 result.AddRange(new byte[0]);
 
             return result.ToArray();
         }
 
-        public DiskDriveRequest FromBinary(byte[] binary)
+        public override void FromBinary(byte[] binary)
         {
-            return new DiskDriveRequest(binary);
-        }
+            control = binary[0];
 
-        void IDataType.FromBinary(byte[] value)
-        {
-            read = value[0] != 0;
+            Range<byte> _data = new Range<byte>(1, 4, binary);
+            data = BitConverter.ToUInt32(_data.ToArray(), 0);
 
-            Range<byte> _address = new Range<byte>(1, sizeof(uint), value);
-            address = BitConverter.ToUInt32(_address.ToArray(), 0);
-
-            Range<byte> _length = new Range<byte>(5, sizeof(uint), value);
-            length = BitConverter.ToUInt32(_length.ToArray(), 0);
-
-            Range<byte> _error = new Range<byte>(9, sizeof(int), value);
-            error = BitConverter.ToInt32(_error.ToArray(), 0);
-
-            if ((length > 0) & (value.Length == length + 13))
+            try
             {
-                Range<byte> _data = new Range<byte>(13, (int)length, value);
-                data = _data.ToArray();
+                Range<byte> _length = new Range<byte>(5, sizeof(uint), binary);
+                length = BitConverter.ToUInt32(_length.ToArray(), 0);
+            }
+            catch (BoundaryOutOfRangeException)
+            {
+                length = 0;
+            }
+
+            if ((length > 0) & (length + 9 == binary.Length))
+            {
+                Range<byte> _diskdata = new Range<byte>(9, (int)length, binary);
+                diskData = _diskdata.ToArray();
             }
             else
             {
-                data = new byte[0];
+                diskData = new byte[0];
             }
-        }
+        }   
     }
 }

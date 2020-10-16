@@ -64,11 +64,11 @@ namespace GSVM.Components.Processors
         /// </summary>
         /// <param name="regA"></param>
         /// <param name="regB"></param>
-        void Write(Register_t  regA, Register_t  regB)
+        void Write(Register_t address, Register_t value)
         {
-            MoveR(Register.MAR, regA);
-            MoveL(Register.MLR, registers.SizeOf(regB));
-            MoveR(Register.MDR, regB);
+            MoveR(Register.MAR, address);
+            MoveL(Register.MLR, registers.SizeOf(value));
+            MoveR(Register.MDR, value);
             WriteMemory();
         }
 
@@ -77,11 +77,27 @@ namespace GSVM.Components.Processors
         /// </summary>
         /// <param name="reg"></param>
         /// <param name="literal"></param>
-        void Write(uint16_t literal, Register_t reg)
+        void Write(uint16_t address, Register_t value)
         {
-            MoveL(Register.MAR, literal);
-            MoveL(Register.MLR, registers.SizeOf(reg));
-            MoveR(Register.MDR, reg);
+            MoveL(Register.MAR, address);
+            MoveL(Register.MLR, registers.SizeOf(value));
+            MoveR(Register.MDR, value);
+            WriteMemory();
+        }
+
+        void Write(uint16_t address, uint16_t value)
+        {
+            MoveL(Register.MAR, address);
+            MoveL(Register.MLR, 2);
+            MoveL(Register.MDR, value);
+            WriteMemory();
+        }
+
+        void Write(Register_t address, uint16_t value)
+        {
+            MoveR(Register.MAR, address);
+            MoveL(Register.MLR, 2);
+            MoveL(Register.MDR, value);
             WriteMemory();
         }
 

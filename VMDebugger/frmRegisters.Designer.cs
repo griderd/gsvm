@@ -40,6 +40,7 @@
             this.btnStart = new System.Windows.Forms.Button();
             this.btnDebug = new System.Windows.Forms.Button();
             this.lstStack = new System.Windows.Forms.ListBox();
+            this.btnResume = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lstRegisters
@@ -47,9 +48,10 @@
             this.lstRegisters.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.colRegister,
             this.colValue});
+            this.lstRegisters.HideSelection = false;
             this.lstRegisters.Location = new System.Drawing.Point(12, 12);
             this.lstRegisters.Name = "lstRegisters";
-            this.lstRegisters.Size = new System.Drawing.Size(258, 494);
+            this.lstRegisters.Size = new System.Drawing.Size(258, 572);
             this.lstRegisters.TabIndex = 0;
             this.lstRegisters.UseCompatibleStateImageBehavior = false;
             this.lstRegisters.View = System.Windows.Forms.View.Details;
@@ -66,7 +68,7 @@
             // 
             // btnStep
             // 
-            this.btnStep.Location = new System.Drawing.Point(413, 514);
+            this.btnStep.Location = new System.Drawing.Point(411, 595);
             this.btnStep.Name = "btnStep";
             this.btnStep.Size = new System.Drawing.Size(120, 33);
             this.btnStep.TabIndex = 1;
@@ -84,6 +86,7 @@
             this.lstInfo.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader2});
+            this.lstInfo.HideSelection = false;
             this.lstInfo.Location = new System.Drawing.Point(276, 12);
             this.lstInfo.Name = "lstInfo";
             this.lstInfo.Size = new System.Drawing.Size(258, 133);
@@ -104,7 +107,7 @@
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(12, 512);
+            this.btnStart.Location = new System.Drawing.Point(10, 593);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(99, 38);
             this.btnStart.TabIndex = 3;
@@ -114,7 +117,7 @@
             // 
             // btnDebug
             // 
-            this.btnDebug.Location = new System.Drawing.Point(117, 511);
+            this.btnDebug.Location = new System.Drawing.Point(115, 592);
             this.btnDebug.Name = "btnDebug";
             this.btnDebug.Size = new System.Drawing.Size(99, 38);
             this.btnDebug.TabIndex = 4;
@@ -127,14 +130,25 @@
             this.lstStack.FormattingEnabled = true;
             this.lstStack.Location = new System.Drawing.Point(275, 151);
             this.lstStack.Name = "lstStack";
-            this.lstStack.Size = new System.Drawing.Size(258, 355);
+            this.lstStack.Size = new System.Drawing.Size(258, 433);
             this.lstStack.TabIndex = 5;
+            // 
+            // btnResume
+            // 
+            this.btnResume.Location = new System.Drawing.Point(306, 595);
+            this.btnResume.Name = "btnResume";
+            this.btnResume.Size = new System.Drawing.Size(99, 33);
+            this.btnResume.TabIndex = 6;
+            this.btnResume.Text = "Resume";
+            this.btnResume.UseVisualStyleBackColor = true;
+            this.btnResume.Click += new System.EventHandler(this.btnResume_Click);
             // 
             // frmRegisters
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(542, 559);
+            this.ClientSize = new System.Drawing.Size(542, 642);
+            this.Controls.Add(this.btnResume);
             this.Controls.Add(this.lstStack);
             this.Controls.Add(this.btnDebug);
             this.Controls.Add(this.btnStart);
@@ -144,6 +158,7 @@
             this.DoubleBuffered = true;
             this.Name = "frmRegisters";
             this.Text = "Registers";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmRegisters_FormClosing);
             this.Load += new System.EventHandler(this.frmRegisters_Load);
             this.Shown += new System.EventHandler(this.frmRegisters_Shown);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmRegisters_KeyDown);
@@ -165,6 +180,7 @@
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.Button btnDebug;
         private System.Windows.Forms.ListBox lstStack;
+        private System.Windows.Forms.Button btnResume;
     }
 }
 

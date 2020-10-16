@@ -45,7 +45,5 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
             return '\0';
         }
-
-       
     }
 }

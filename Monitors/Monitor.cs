@@ -16,6 +16,7 @@ namespace GSVM.Peripherals.Monitors
     public class Monitor : GameWindow
     {
         MonochromeDisplayAdapter adapter;
+        bool firstFrameRendered = false;
 
         public Monitor(int width, int height, string title, MonochromeDisplayAdapter displayAdapter)
             : base(width, height)
@@ -46,25 +47,30 @@ namespace GSVM.Peripherals.Monitors
         int GetFrame()
         {
             adapter.Rasterize();
-            Bitmap raster = new Bitmap(adapter.Raster);
-            //raster.RotateFlip(RotateFlipType.Rotate180FlipX);
             int tex;
+            
+            using (Bitmap raster = new Bitmap(adapter.Raster))
+            {
+                //raster.RotateFlip(RotateFlipType.Rotate180FlipX);
 
-            GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
+                GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 
-            GL.GenTextures(1, out tex);
-            GL.BindTexture(TextureTarget.Texture2D, tex);
+                if (firstFrameRendered)
+                    GL.DeleteTexture(1);
+                GL.GenTextures(1, out tex);
+                GL.BindTexture(TextureTarget.Texture2D, tex);
 
-            BitmapData data = raster.LockBits(new Rectangle(0, 0, raster.Width, raster.Height),
-                ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                BitmapData data = raster.LockBits(new Rectangle(0, 0, raster.Width, raster.Height),
+                    ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, raster.Width, raster.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
-            raster.UnlockBits(data);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, raster.Width, raster.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+                raster.UnlockBits(data);
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            }
 
             return tex;
         }

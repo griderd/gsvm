@@ -58,5 +58,7 @@ namespace GSVM.Components
         }
 
         public abstract byte[] GetRegisters();
+
+        public abstract void Interrupt(int channel);
     }
 }

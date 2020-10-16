@@ -18,6 +18,7 @@ using GSVM.Constructs.DataTypes;
 using GSVM.Components.Processors.CPU_1;
 using GSVM.Devices;
 using GSVM.Devices.DisplayAdapters;
+using GSVM.Peripherals.IODevices;
 
 using GSVM.Components.Processors.CPU_1.Assembler;
 
@@ -26,13 +27,16 @@ namespace VMDebugger
     public partial class frmRegisters : Form
     {
         Memory cmosMemory;
+        Memory disk1Memory;
         DiskDrive cmos;
+        DiskDrive disk1;
         Southbridge sb;
         CPU1 cpu;
         Northbridge nb;
         ThreadedClock clock;
         VirtualMachine vm;
         MonochromeDisplayAdapter graphics;
+        Keyboard keyboard;
 
         frmMonitor monitor;
         frmRAM ram;
@@ -79,18 +83,29 @@ namespace VMDebugger
             registers.Subdivide(Register.EDX, Register.DX);
             registers.Subdivide(Register.DX, Register.DL, Register.DH);
 
+            registers.Append<uint16_t>(Register.ABP);
+            registers.Append<uint16_t>(Register.AEI);
+            registers.Append<uint16_t>(Register.AEL);
+            registers.Append<uint16_t>(Register.AEP);
+
             registers.BuildMemory();
 
             //byte[] bin = Assemble();
-            byte[] bin = System.IO.File.ReadAllBytes("post.bin");
+            byte[] bcmos = System.IO.File.ReadAllBytes("cmos.bin");
+            byte[] bdisk1 = System.IO.File.ReadAllBytes("disk1.bin");
 
             // Build the VM
-            cmosMemory = new Memory(bin);
-            cmos = new DiskDrive(cmosMemory, true);
+            cmosMemory = new Memory(bcmos);
+            cmos = new DiskDrive(cmosMemory);
+            disk1Memory = new Memory(bdisk1);
+            disk1 = new DiskDrive(disk1Memory);
             sb = new Southbridge(cmos);
+            sb.AddDevice(disk1);
+            keyboard = new Keyboard();
+            sb.AddDevice(keyboard);
             cpu = new CPU1();
             graphics = new MonochromeDisplayAdapter();
-            nb = new Northbridge(cpu, sb, new Memory(16384), graphics);
+            nb = new Northbridge(cpu, sb, new Memory(64*1024), graphics);
             clock = new ThreadedClock(nb);
             nb.Clock = clock;
             vm = new VirtualMachine(cpu, clock, nb, sb);
@@ -173,12 +188,18 @@ namespace VMDebugger
             lstInfo.Items.Add(item);
 
             // Stack
-            //lstStack.Items.Clear();
-            //IDataType[] values = cpu.Stack;
-            //for (int i = 0; i < values.Length; i++)
-            //{
-            //    lstStack.Items.Add(values[i].ToString());
-            //}
+            lstStack.Items.Clear();
+            IDataType[] values = cpu.Stack;
+            for (int i = 0; i < values.Length; i++)
+            {
+                try
+                {
+                    lstStack.Items.Add(values[i].ToString());
+                }
+                catch
+                {
+                }
+            }
         }
 
         ulong Lookup(Register i)
@@ -240,7 +261,7 @@ namespace VMDebugger
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            vm.Debug = false;
+            // vm.Debug = false;
             vm.Start();
             btnDebug.Enabled = false;
             btnStart.Enabled = false;
@@ -271,6 +292,28 @@ namespace VMDebugger
         public int GetMLR()
         {
             return (int)Lookup(Register.MLR);
+        }
+
+        private void frmRegisters_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            vm.Stop();
+            monitor.Close();
+            ram.Close();
+            try
+            {
+                graphics.Dispose();
+            }
+            catch
+            {
+            }
+        }
+
+        private void btnResume_Click(object sender, EventArgs e)
+        {
+            tmrUpdate.Enabled = true;
+
+            vm.UpdateDebugger -= Vm_UpdateDebugger;
+            vm.Debug = false;
         }
     }
 }

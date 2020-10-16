@@ -6,7 +6,24 @@ using System.Threading.Tasks;
 
 namespace GSVM.Devices
 {
-    public abstract class GenericSerialBus : GenericDeviceBus<GenericSerialRequest>
+    public class GenericSerialBus : GenericDeviceBus<GenericSerialRequest>
     {
+        public GenericSerialBus()
+        {
+            GenerateID();
+        }
+
+        public override void ClockTick()
+        {
+            base.ClockTick();
+
+            ReadyToRead = true;
+            ReadyToWrite = false;
+        }
+
+        protected override bool InterruptChannelOk(uint channel)
+        {
+            return true;
+        }
     }
 }

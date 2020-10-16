@@ -93,7 +93,7 @@ namespace GSVM.Constructs.DataTypes
             return value.ToString();
         }
 
-        public IIntegral CastTo<TOut>() where TOut : IIntegral
+        public TOut CastTo<TOut>() where TOut : IIntegral
         {
             TOut result = default(TOut);
             byte[] value = new byte[result.Length];

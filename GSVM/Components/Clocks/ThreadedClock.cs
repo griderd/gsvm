@@ -10,7 +10,7 @@ namespace GSVM.Components.Clocks
 {
     public class ThreadedClock : ClockGenerator
     {
-        Thread clockThread = new Thread(new ParameterizedThreadStart(ClockTick));
+        Thread clockThread;
 
         public ThreadedClock(Northbridge northbridge)
             : base(northbridge)
@@ -22,15 +22,18 @@ namespace GSVM.Components.Clocks
         {
             if (!northbridge.CPU.Debug)
             {
+                clockThread = new Thread(new ParameterizedThreadStart(ClockTick));
                 ThreadState state = clockThread.ThreadState;
                 clockThread.Start(northbridge);
                 ClockEnabled = true;
+                Enabled = true;
             }
         }
 
         public override void Stop()
         {
             ClockEnabled = false;
+            Enabled = false;
         }
 
         public static void ClockTick(object nb)

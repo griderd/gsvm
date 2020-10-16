@@ -29,7 +29,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
         List<byte> binary = new List<byte>();
         public byte[] Binary { get { return binary.ToArray(); } }
 
-        Encoding encoding = Encoding.ASCII;
+        Encoding encoding = Encoding.GetEncoding(437);
 
         ushort address = 0;
         
@@ -369,7 +369,9 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             string name = match.Groups[1].Value;
             string value = match.Groups[2].Value;
             string literalValue = StringEscaper.StringLiteral(value);
-            byte[] encoded = encoding.GetBytes(literalValue);
+
+            byte[] encoded = encoding.GetBytes(literalValue);           
+
             int length = literalValue.Length;
 
             for (int i = 0; i < length; i++)
@@ -533,6 +535,23 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
             Func<bool> la = () => flags.HasFlag(OpcodeFlags.Literal1);
             Func<bool> lb = () => flags.HasFlag(OpcodeFlags.Literal2);
 
+            Func<Opcodes, Opcodes, Opcodes, Opcodes, Opcodes> RR_LR_RL_LL = (rr, lr, rl, ll) =>
+            {
+                if (ra() & rb())
+                    return rr;
+                else if (ra() & lb())
+                    return rl;
+                else if (la() & rb())
+                    return lr;
+                else if (la() & la())
+                    return ll;
+                else
+                {
+                    InvalidOperands();
+                    return Opcodes.nop;
+                }
+            };
+
             Func<Opcodes, Opcodes, Opcodes> RR_LR = (rr, lr) =>
             {
                 if (ra() & rb())
@@ -633,7 +652,7 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     return RR_RL(Opcodes.readr, Opcodes.readl);
 
                 case "write":
-                    return RR_LR(Opcodes.writer, Opcodes.writel);
+                    return RR_LR_RL_LL(Opcodes.writerr, Opcodes.writelr, Opcodes.writerl, Opcodes.writell);
 
                 case "push":
                     return R_L(Opcodes.pushr, Opcodes.pushl);
@@ -730,8 +749,27 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
 
                 case "in":
                     return NoOps(Opcodes._in);
+
+                case "sa":
+                    return RR_LR_RL_LL(Opcodes.sarr, Opcodes.salr, Opcodes.sarl, Opcodes.sall);
+
+                case "sai":
+                    return R_L(Opcodes.sair, Opcodes.sail);
+
+                case "inca":
+                    return NoOps(Opcodes.inca);
+
+                case "deca":
+                    return NoOps(Opcodes.deca);
+
+                case "ls":
+                    return RR_RL(Opcodes.lsr, Opcodes.lsl);
+
+                case "rs":
+                    return RR_RL(Opcodes.rsr, Opcodes.rsl);
             }
 
+            RaiseError(string.Format("Invalid instruction \"{0}\"", operation));
             return Opcodes.nop;
         }
 
@@ -841,12 +879,24 @@ namespace GSVM.Components.Processors.CPU_1.Assembler
                     ((uint32_t)(symbols[pragma["len"]])).Value = Length;
                 }
             }
+            if (pragma.ContainsKey("offset"))
+            {
+                if (stage == Stage.Preparsing)
+                {
+                    ushort offset = ushort.Parse(pragma["offset"]);
+                    Offset = offset;
+                }
+            }
             if (pragma.ContainsKey("encoding"))
             {
                 if (stage == Stage.Preparsing)
                 {
                     switch (pragma["encoding"])
                     {
+                        case "437":
+                            encoding = Encoding.GetEncoding(437);
+                            break;
+
                         case "ascii":
                             encoding = Encoding.ASCII;
                             break;
