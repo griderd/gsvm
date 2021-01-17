@@ -4,14 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GSVM.Compiler
+namespace GSVM.Components.Processors
 {
-    enum ConditionalState
+    public class CPU2
     {
-        None,
-        IfDef,
-        IfNDef,
-        Else,
-        ElIf
     }
 }

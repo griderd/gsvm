@@ -12,7 +12,7 @@ namespace GSASMTest
     {
         static string testCode = @"
 ; sample comment
-jump main
+jmp main
 main:
     hlt";
 
