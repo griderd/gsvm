@@ -1,20 +1,18 @@
-﻿using System;
+﻿using GSVM.Constructs;
+using GSVM.Constructs.DataTypes;
+using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
-using GSVM.Constructs;
-using GSVM.Constructs.DataTypes;
 
 namespace GSVM.Components
 {
-    /// <summary>
-    /// Uses Span to access data faster.
-    /// </summary>
-    public class Memory2 : IMemory
+    public class Memory3 : IMemory
     {
-        byte[] data;
+        MemoryStream data;
 
         protected bool readOnly;
         public bool ReadOnly { get { return readOnly; } }
@@ -39,15 +37,16 @@ namespace GSVM.Components
             }
         }
 
-        public Memory2(uint size)
+        public Memory3(uint size)
         {
-            data = new byte[size];
+            data = new MemoryStream((int)size);
+            data.Write(new byte[size], 0, (int)size);
             Length = size;
         }
 
-        public Memory2(byte[] data)
+        public Memory3(byte[] data)
         {
-            this.data = data;
+            this.data = new MemoryStream(data);
             Length = (uint)data.LongLength;
         }
 
@@ -55,7 +54,8 @@ namespace GSVM.Components
         {
             if (address < data.Length)
             {
-                return data[address];
+                data.Position = address;
+                return (byte)data.ReadByte();
             }
             else
             {
@@ -68,7 +68,10 @@ namespace GSVM.Components
         {
             if ((address < this.data.Length) & (address + length - 1 < this.data.Length))
             {
-                return new Span<byte>(data, (int)address, (int)length).ToArray();
+                byte[] buffer = new byte[length];
+                data.Position = (int)address;
+                data.Read(buffer, 0, (int)length);
+                return buffer;
             }
             else
             {
@@ -127,7 +130,10 @@ namespace GSVM.Components
                 throw new Exception("Memory is read only.");
 
             if (address < data.Length)
-                data[address] = value;
+            {
+                data.Position = address;
+                data.WriteByte(value);
+            }
             else
                 throw new IndexOutOfRangeException();
         }
@@ -139,9 +145,8 @@ namespace GSVM.Components
 
             if ((address < this.data.Length) & (address + value.Length - 1 < this.data.Length))
             {
-                Span<byte> destBuffer = new Span<byte>(data, (int)address, value.Length);
-                Span<byte> srcBuffer = value;
-                srcBuffer.CopyTo(destBuffer);
+                data.Position = address;
+                data.Write(value, 0, value.Length);
             }
             else
             {
@@ -217,9 +222,14 @@ namespace GSVM.Components
             for (int i = 0; i < toLen; i++)
             {
                 if (i < fromLen)
-                    data[toAddress + i] = data[fromAddress + i];
+                {
+                    byte b = Read((uint)(fromAddress + i));
+                    Write((uint)(toAddress + i), b);
+                }
                 else
-                    data[toAddress + i] = 0;
+                {
+                    Write((uint)(toAddress + i), (byte)0);
+                }
             }
         }
     }

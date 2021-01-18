@@ -12,7 +12,7 @@ namespace GSVM.Components.Controllers
     public class Northbridge
     {
         public CPU CPU { get; private set; }
-        public Memory Memory { get; private set; }
+        public IMemory Memory { get; private set; }
         public GraphicsCard Graphics { get; set; }
         public DebugStepping DebugClock { get; private set; }
         public ClockGenerator Clock { get; set; }
@@ -27,7 +27,7 @@ namespace GSVM.Components.Controllers
 
         }
 
-        public Northbridge(CPU cpu, Southbridge southbridge, Memory ram, GraphicsCard graphics) : this()
+        public Northbridge(CPU cpu, Southbridge southbridge, IMemory ram, GraphicsCard graphics) : this()
         {
             CPU = cpu;
             cpu.Northbridge = this;
@@ -107,24 +107,26 @@ namespace GSVM.Components.Controllers
             return true;
         }
 
-        public void WriteToPort(uint32_t port, uint32_t addr, uint32_t len)
+        // Changed uint32_t to uint in order to support non-standard types on the processor side.
+        public void WriteToPort(uint port, uint addr, uint len)
         {
             try
             {
-                byte[] value = ReadMemory(addr.Value, len.Value);
-                southbridge.WriteToPort((int)port.Value, value);
+                byte[] value = ReadMemory(addr, len);
+                southbridge.WriteToPort((int)port, value);
             }
             catch
             {
             }
         }
 
-        public void ReadFromPort(uint32_t port, uint32_t addr, uint32_t bufferSize)
+        // Changed uint32_t to uint in order to support non-standard types on the processor side.
+        public void ReadFromPort(uint port, uint addr, uint bufferSize)
         {
             try
             {
-                byte[] value = southbridge.ReadFromPort((int)port.Value);
-                WriteMemory(addr.Value, value, bufferSize);
+                byte[] value = southbridge.ReadFromPort((int)port);
+                WriteMemory(addr, value, bufferSize);
             }
             catch
             {

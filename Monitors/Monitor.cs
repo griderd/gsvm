@@ -120,5 +120,10 @@ namespace GSVM.Peripherals.Monitors
 
             GL.MatrixMode(MatrixMode.Modelview);
         }
+
+        public void Show()
+        {
+            Run();
+        }
     }
 }

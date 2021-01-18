@@ -30,13 +30,13 @@
         {
             this.components = new System.ComponentModel.Container();
             this.lstRegisters = new System.Windows.Forms.ListView();
-            this.colRegister = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.colValue = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colRegister = new System.Windows.Forms.ColumnHeader();
+            this.colValue = new System.Windows.Forms.ColumnHeader();
             this.btnStep = new System.Windows.Forms.Button();
             this.tmrUpdate = new System.Windows.Forms.Timer(this.components);
             this.lstInfo = new System.Windows.Forms.ListView();
-            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader1 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
             this.btnStart = new System.Windows.Forms.Button();
             this.btnDebug = new System.Windows.Forms.Button();
             this.lstStack = new System.Windows.Forms.ListBox();
@@ -49,28 +49,32 @@
             this.colRegister,
             this.colValue});
             this.lstRegisters.HideSelection = false;
-            this.lstRegisters.Location = new System.Drawing.Point(12, 12);
+            this.lstRegisters.Location = new System.Drawing.Point(14, 14);
+            this.lstRegisters.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.lstRegisters.Name = "lstRegisters";
-            this.lstRegisters.Size = new System.Drawing.Size(258, 572);
+            this.lstRegisters.Size = new System.Drawing.Size(300, 659);
             this.lstRegisters.TabIndex = 0;
             this.lstRegisters.UseCompatibleStateImageBehavior = false;
             this.lstRegisters.View = System.Windows.Forms.View.Details;
             // 
             // colRegister
             // 
+            this.colRegister.Name = "colRegister";
             this.colRegister.Text = "Register";
             this.colRegister.Width = 120;
             // 
             // colValue
             // 
+            this.colValue.Name = "colValue";
             this.colValue.Text = "Value";
             this.colValue.Width = 100;
             // 
             // btnStep
             // 
-            this.btnStep.Location = new System.Drawing.Point(411, 595);
+            this.btnStep.Location = new System.Drawing.Point(479, 687);
+            this.btnStep.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.btnStep.Name = "btnStep";
-            this.btnStep.Size = new System.Drawing.Size(120, 33);
+            this.btnStep.Size = new System.Drawing.Size(140, 38);
             this.btnStep.TabIndex = 1;
             this.btnStep.Text = "Step (F10)";
             this.btnStep.UseVisualStyleBackColor = true;
@@ -87,9 +91,10 @@
             this.columnHeader1,
             this.columnHeader2});
             this.lstInfo.HideSelection = false;
-            this.lstInfo.Location = new System.Drawing.Point(276, 12);
+            this.lstInfo.Location = new System.Drawing.Point(322, 14);
+            this.lstInfo.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.lstInfo.Name = "lstInfo";
-            this.lstInfo.Size = new System.Drawing.Size(258, 133);
+            this.lstInfo.Size = new System.Drawing.Size(300, 153);
             this.lstInfo.TabIndex = 2;
             this.lstInfo.UseCompatibleStateImageBehavior = false;
             this.lstInfo.View = System.Windows.Forms.View.Details;
@@ -97,19 +102,22 @@
             // 
             // columnHeader1
             // 
+            this.columnHeader1.Name = "columnHeader1";
             this.columnHeader1.Text = "Field";
             this.columnHeader1.Width = 120;
             // 
             // columnHeader2
             // 
+            this.columnHeader2.Name = "columnHeader2";
             this.columnHeader2.Text = "Value";
             this.columnHeader2.Width = 100;
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(10, 593);
+            this.btnStart.Location = new System.Drawing.Point(12, 684);
+            this.btnStart.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.btnStart.Name = "btnStart";
-            this.btnStart.Size = new System.Drawing.Size(99, 38);
+            this.btnStart.Size = new System.Drawing.Size(115, 44);
             this.btnStart.TabIndex = 3;
             this.btnStart.Text = "Start";
             this.btnStart.UseVisualStyleBackColor = true;
@@ -117,9 +125,10 @@
             // 
             // btnDebug
             // 
-            this.btnDebug.Location = new System.Drawing.Point(115, 592);
+            this.btnDebug.Location = new System.Drawing.Point(134, 683);
+            this.btnDebug.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.btnDebug.Name = "btnDebug";
-            this.btnDebug.Size = new System.Drawing.Size(99, 38);
+            this.btnDebug.Size = new System.Drawing.Size(115, 44);
             this.btnDebug.TabIndex = 4;
             this.btnDebug.Text = "Start (Debug)";
             this.btnDebug.UseVisualStyleBackColor = true;
@@ -128,16 +137,19 @@
             // lstStack
             // 
             this.lstStack.FormattingEnabled = true;
-            this.lstStack.Location = new System.Drawing.Point(275, 151);
+            this.lstStack.ItemHeight = 15;
+            this.lstStack.Location = new System.Drawing.Point(321, 174);
+            this.lstStack.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.lstStack.Name = "lstStack";
-            this.lstStack.Size = new System.Drawing.Size(258, 433);
+            this.lstStack.Size = new System.Drawing.Size(300, 499);
             this.lstStack.TabIndex = 5;
             // 
             // btnResume
             // 
-            this.btnResume.Location = new System.Drawing.Point(306, 595);
+            this.btnResume.Location = new System.Drawing.Point(357, 687);
+            this.btnResume.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.btnResume.Name = "btnResume";
-            this.btnResume.Size = new System.Drawing.Size(99, 33);
+            this.btnResume.Size = new System.Drawing.Size(115, 38);
             this.btnResume.TabIndex = 6;
             this.btnResume.Text = "Resume";
             this.btnResume.UseVisualStyleBackColor = true;
@@ -145,9 +157,9 @@
             // 
             // frmRegisters
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(542, 642);
+            this.ClientSize = new System.Drawing.Size(632, 741);
             this.Controls.Add(this.btnResume);
             this.Controls.Add(this.lstStack);
             this.Controls.Add(this.btnDebug);
@@ -156,6 +168,7 @@
             this.Controls.Add(this.btnStep);
             this.Controls.Add(this.lstRegisters);
             this.DoubleBuffered = true;
+            this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Name = "frmRegisters";
             this.Text = "Registers";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmRegisters_FormClosing);

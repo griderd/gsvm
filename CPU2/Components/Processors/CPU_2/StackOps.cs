@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using GSVM.Components.Processors.CPU_1;
-using GSVM.Constructs.DataTypes;
-using GSVM.Components.Clocks;
-using GSVM.Constructs;
+using GSVM.Constructs.FastDataTypes;
+using GSVM.Components.Processors.CPU_2;
 
 namespace GSVM.Components.Processors
 {
-    public partial class CPU1 : CPU
+    public partial class CPU2 : CPU
     {
         void PushRegister(Register_t reg)
         {
@@ -19,25 +17,21 @@ namespace GSVM.Components.Processors
             {
                 case 8:
                     uint64_t value64 = registers.Read<uint64_t>(reg);
-                    System.Diagnostics.Debug.Assert(value64 != null);
                     stack.Push(value64);
                     break;
 
                 case 4:
                     uint32_t value32 = registers.Read<uint32_t>(reg);
-                    System.Diagnostics.Debug.Assert(value32 != null);
                     stack.Push(value32);
                     break;
 
                 case 2:
                     uint16_t value16 = registers.Read<uint16_t>(reg);
-                    System.Diagnostics.Debug.Assert(value16 != null);
                     stack.Push(value16);
                     break;
 
                 case 1:
                     uint8_t value8 = registers.Read<uint8_t>(reg);
-                    System.Diagnostics.Debug.Assert(value8 != null);
                     stack.Push(value8);
                     break;
             }

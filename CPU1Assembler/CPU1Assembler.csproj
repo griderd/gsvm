@@ -1,4 +1,29 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+    <RootNamespace>CPU1Assembler</RootNamespace>
+    <AssemblyName>CPU1Assembler</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GSVM.Components.Processors.CPU_1\CPU1.csproj">
+      <Project>{8df80b65-ca6e-48a3-9419-36f6c17f16df}</Project>
+      <Name>CPU1</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GSVM\GSVM.csproj">
+      <Project>{46fb98a3-b251-4119-8e29-077b23d8fdb4}</Project>
+      <Name>GSVM</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
+
+<!--
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -63,3 +88,4 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
+-->

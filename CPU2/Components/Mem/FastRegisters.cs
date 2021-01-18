@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using GSVM.Constructs;
 using GSVM.Constructs.DataTypes;
 
 namespace GSVM.Components.Mem
 {
-    public class Registers<TKey>
+    public class FastRegisters<TKey>
     {
-        Memory memory;
+        Memory2 memory;
         MemoryMap<TKey> map;
 
-        public Registers()
+        public FastRegisters()
         {
             map = new MemoryMap<TKey>();
         }
@@ -144,7 +143,7 @@ namespace GSVM.Components.Mem
 
         public void BuildMemory()
         {
-            memory = new Memory(map.Length);
+            memory = new Memory2(map.Length);
         }
 
         public T Read<T>(TKey register)
@@ -181,7 +180,7 @@ namespace GSVM.Components.Mem
             return map.Lookup(name);
         }
 
-        public uint16_t SizeOf(TKey name)
+        public ushort SizeOf(TKey name)
         {
             SmartPointer ptr = Lookup(name);
             return (ushort)ptr.Length;

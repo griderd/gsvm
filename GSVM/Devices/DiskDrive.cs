@@ -13,7 +13,7 @@ namespace GSVM.Devices
         public const byte PING = 7;
         public const byte REPLY = 8;
 
-        protected Memory memory;
+        protected IMemory memory;
         public bool ReadOnly { get; private set; }
 
         private DiskDrive(bool isReadOnly = false)
@@ -28,7 +28,7 @@ namespace GSVM.Devices
             memory = new Memory(size);    
         }
 
-        public DiskDrive(Memory memory, bool isReadOnly = false) : this(isReadOnly)
+        public DiskDrive(IMemory memory, bool isReadOnly = false) : this(isReadOnly)
         {
             this.memory = memory;
         }

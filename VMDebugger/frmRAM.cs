@@ -17,12 +17,12 @@ namespace VMDebugger
 {
     public partial class frmRAM : Form
     {
-        Memory memory;
+        IMemory memory;
         frmRegisters registers;
         //ByteViewer byteViewer;
         DynamicByteProvider byteProvider;
 
-        public frmRAM(Memory memory, frmRegisters registers)
+        public frmRAM(IMemory memory, frmRegisters registers)
         {
             InitializeComponent();
             this.memory = memory;
@@ -52,11 +52,17 @@ namespace VMDebugger
 
             StringBuilder hex = new StringBuilder();
 
-            byte[] dump = memory.Read(0, memory.Length);
+            try
+            {
+                byte[] dump = memory.Read(0, memory.Length);
 
-            byteProvider.DeleteBytes(0, byteProvider.Length);
-            byteProvider.InsertBytes(0, dump);
-            hexBox.Select(select, selLength);
+                byteProvider.DeleteBytes(0, byteProvider.Length);
+                byteProvider.InsertBytes(0, dump);
+                hexBox.Select(select, selLength);
+            }
+            catch
+            {
+            }
         }
 
         private void btnDump_Click(object sender, EventArgs e)

@@ -15,23 +15,21 @@ using GSVM.Components.Clocks;
 using GSVM.Components.Processors;
 using GSVM.Components.Mem;
 using GSVM.Constructs.DataTypes;
-using GSVM.Components.Processors.CPU_1;
+using GSVM.Components.Processors.CPU_2;
 using GSVM.Devices;
 using GSVM.Devices.DisplayAdapters;
 using GSVM.Peripherals.IODevices;
-
-using GSVM.Components.Processors.CPU_1.Assembler;
 
 namespace VMDebugger
 {
     public partial class frmRegisters : Form
     {
-        Memory cmosMemory;
-        Memory disk1Memory;
+        Memory2 cmosMemory;
+        Memory2 disk1Memory;
         DiskDrive cmos;
         DiskDrive disk1;
         Southbridge sb;
-        CPU1 cpu;
+        CPU2 cpu;
         Northbridge nb;
         ThreadedClock clock;
         VirtualMachine vm;
@@ -95,17 +93,17 @@ namespace VMDebugger
             byte[] bdisk1 = System.IO.File.ReadAllBytes("disk1.bin");
 
             // Build the VM
-            cmosMemory = new Memory(bcmos);
+            cmosMemory = new Memory2(bcmos);
             cmos = new DiskDrive(cmosMemory);
-            disk1Memory = new Memory(bdisk1);
+            disk1Memory = new Memory2(bdisk1);
             disk1 = new DiskDrive(disk1Memory);
             sb = new Southbridge(cmos);
             sb.AddDevice(disk1);
             keyboard = new Keyboard();
             sb.AddDevice(keyboard);
-            cpu = new CPU1();
+            cpu = new CPU2();
             graphics = new MonochromeDisplayAdapter();
-            nb = new Northbridge(cpu, sb, new Memory(64*1024), graphics);
+            nb = new Northbridge(cpu, sb, new Memory2(64*1024), graphics);
             clock = new ThreadedClock(nb);
             nb.Clock = clock;
             vm = new VirtualMachine(cpu, clock, nb, sb);
@@ -188,6 +186,7 @@ namespace VMDebugger
             lstInfo.Items.Add(item);
 
             // Stack
+            /*
             lstStack.Items.Clear();
             IDataType[] values = cpu.Stack;
             for (int i = 0; i < values.Length; i++)
@@ -200,6 +199,7 @@ namespace VMDebugger
                 {
                 }
             }
+            */
         }
 
         ulong Lookup(Register i)

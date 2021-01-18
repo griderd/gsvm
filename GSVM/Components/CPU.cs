@@ -33,7 +33,7 @@ namespace GSVM.Components
         /// <remarks>
         /// The CPU class does not have an internal clock system. It is expected that you will implement one in your CPU implementation using a loop, or a timer of some sort. You may also use an external clock that is provided.
         /// </remarks>
-        public void Tick()
+        public virtual void Tick()
         {
             Busy = true;
 

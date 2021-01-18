@@ -16,7 +16,13 @@ namespace GSVM.Components.Processors
     public partial class CPU1 : CPU
     {
         Stack<IDataType> stack;
-        public IDataType[] Stack { get { return stack.ToArray(); } }
+        public IDataType[] Stack 
+        { 
+            get 
+            { 
+                return stack.ToArray();
+            } 
+        }
 
         Dictionary<Opcodes, Delegate> opcodes;
 

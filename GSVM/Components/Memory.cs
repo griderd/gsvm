@@ -9,7 +9,7 @@ using GSVM.Constructs.DataTypes;
 
 namespace GSVM.Components
 {
-    public class Memory
+    public class Memory : IMemory
     {
         byte[] data;
 
